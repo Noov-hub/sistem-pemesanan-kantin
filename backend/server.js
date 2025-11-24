@@ -41,7 +41,14 @@ app.use((req, res, next) => {
     req.io = io;
     next();
 });
+const orderRoutes = require('./routes/orderRoutes'); // <--- Tambah ini di atas
 
+// ... (kode socket io middleware)
+
+// Gunakan Route
+app.use('/api/orders', orderRoutes); // <--- Tambah ini
+
+// ... (server.listen)
 // --- JALANKAN SERVER ---
 const PORT = 5000;
 server.listen(PORT, () => {
