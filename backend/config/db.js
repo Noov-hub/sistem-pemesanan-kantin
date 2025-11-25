@@ -1,19 +1,20 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
 
+// Membaca file .env
 dotenv.config();
 
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',      // Default user XAMPP
-    password: '',      // Default password XAMPP (kosong)
-    database: 'kantin_db',
+    host: process.env.DB_HOST,       // Membaca dari .env
+    user: process.env.DB_USER,       // Membaca dari .env
+    password: process.env.DB_PASS,   // Membaca dari .env
+    database: process.env.DB_NAME,   // Membaca dari .env
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-// Cek koneksi saat aplikasi jalan
+// Cek koneksi
 db.getConnection((err, conn) => {
     if (err) {
         console.error('❌ Database Connection Failed:', err.message);
@@ -23,4 +24,4 @@ db.getConnection((err, conn) => {
     }
 });
 
-module.exports = db.promise(); // Kita pakai mode Promise (Async/Await) agar modern
+module.exports = db.promise();
