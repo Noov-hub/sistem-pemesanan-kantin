@@ -2,17 +2,19 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
 
-// CREATE: POST http://localhost:5000/api/orders
-router.post('/', orderController.createOrder);
+// --- POST (Create) ---
+router.post('/', orderController.createOrder); // Buat Pesanan
 
-// READ: GET http://localhost:5000/api/orders
-router.get('/', orderController.getAllOrders);
+// --- GETTERS (Filter Khusus) ---
+router.get('/', orderController.getAllOrders);          // URL: /api/orders
+router.get('/active', orderController.getActiveOrders); // URL: /api/orders/active
+router.get('/kitchen', orderController.getKitchenOrders); // URL: /api/orders/kitchen
+router.get('/new', orderController.getNewOrders);       // URL: /api/orders/new
+router.get('/history', orderController.getFinishedOrders); // URL: /api/orders/history
 
-// UPDATE: PUT http://localhost:5000/api/orders/:id
-// Contoh: http://localhost:5000/api/orders/5
+// --- PUT & DELETE (By ID) ---
+// Wajib ditaruh PALING BAWAH agar tidak bentrok dengan route di atas
 router.put('/:id', orderController.updateOrderStatus);
-
-// DELETE: DELETE http://localhost:5000/api/orders/:id
 router.delete('/:id', orderController.deleteOrder);
 
 module.exports = router;
