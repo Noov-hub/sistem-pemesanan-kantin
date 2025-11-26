@@ -32,13 +32,76 @@ exports.createOrder = async (req, res) => {
 };
 
 // 2. READ: Ambil Semua Pesanan (Untuk Kasir & Dapur)
+// --- 1. GET ALL (Debug / Super Admin) ---
+// Mengambil SEMUA data tanpa terkecuali.
 exports.getAllOrders = async (req, res) => {
     try {
-        // Ambil semua pesanan, urutkan dari yang terbaru
-        // Tips: Nanti bisa ditambah WHERE status != 'completed' agar tidak berat
         const [rows] = await db.execute("SELECT * FROM orders ORDER BY created_at DESC");
-        
-        res.status(200).json({ message: "Data fetched", data: rows });
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// --- 2. GET ACTIVE (Untuk Tab Utama Kasir) ---
+// Mengambil semua yang SEDANG BERJALAN (New, Confirmed, Cooking, Ready).
+// Mengecualikan yang sudah selesai (Completed) atau batal (Cancelled).
+exports.getActiveOrders = async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT * FROM orders 
+            WHERE status NOT IN ('completed', 'cancelled') 
+            ORDER BY created_at ASC
+        `);
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// --- 3. GET DAPUR (Khusus Layar Dapur) ---
+// Hanya mengambil yang statusnya 'confirmed' (antrian) atau 'cooking' (sedang dimasak).
+// 'New' tidak perlu (belum bayar), 'Ready' tidak perlu (sudah selesai masak).
+exports.getKitchenOrders = async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT * FROM orders 
+            WHERE status IN ('confirmed', 'cooking') 
+            ORDER BY updated_at ASC
+        `);
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// --- 4. GET NEW (Notifikasi Pesanan Masuk) ---
+// Khusus untuk tab "Pesanan Baru" di Kasir.
+exports.getNewOrders = async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT * FROM orders 
+            WHERE status = 'new' 
+            ORDER BY created_at ASC
+        `);
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+// --- 5. GET HISTORY (Arsip) ---
+// Mengambil yang sudah selesai atau dibatalkan.
+exports.getFinishedOrders = async (req, res) => {
+    try {
+        // Limit 100 terakhir agar tidak berat
+        const [rows] = await db.execute(`
+            SELECT * FROM orders 
+            WHERE status IN ('completed', 'cancelled') 
+            ORDER BY updated_at DESC 
+            LIMIT 100
+        `);
+        res.status(200).json({ data: rows });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
