@@ -106,6 +106,23 @@ exports.getFinishedOrders = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+// --- 6. GET PUBLIC QUEUE (Untuk Monitor TV / HP Customer) ---
+exports.getPublicQueue = async (req, res) => {
+    try {
+        // UPDATE: Menambahkan 'new' ke dalam daftar status yang ditampilkan
+        // Kita tetap hanya mengambil kolom penting (privasi terjaga)
+        const [rows] = await db.execute(`
+            SELECT id, customer_name, status, created_at 
+            FROM orders 
+            WHERE status IN ('new', 'confirmed', 'cooking', 'ready') 
+            ORDER BY created_at ASC
+        `);
+        
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
 
 // 3. UPDATE: Ganti Status (Jantung Operasional)
 exports.updateOrderStatus = async (req, res) => {
