@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { socket } from "@/lib/socket";
 
 export default function DapurDashboard() {
   const router = useRouter();
@@ -10,50 +11,20 @@ export default function DapurDashboard() {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
 
-  // 1. Cek Login (Proteksi)
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
     
-    // Hanya boleh masuk jika role = kitchen
     if (!token || role !== "kitchen") {
-      alert("Area Terbatas! Khusus Staff Dapur.");
       router.push("/login");
     } else {
       setUsername(localStorage.getItem("username"));
       fetchKitchenOrders();
     }
-
-    // SETUP SOCKET
-    socket.connect();
-
-    // Listener Khusus Dapur
-    socket.on("status_updated", ({ id, status }) => {
-        // Trik Cerdas: Daripada update state manual yang rumit,
-        // kita panggil ulang fetchKitchenOrders() saja agar data pasti sinkron.
-        // Karena event ini jarang terjadi (tidak setiap detik), ini aman.
-        fetchKitchenOrders();
-    });
-
-    // Listener jika Kasir membatalkan/menghapus pesanan
-    socket.on("order_deleted", () => {
-        fetchKitchenOrders();
-    });
-    
-    // Listener jika ada pesanan baru dikonfirmasi kasir (Masuk antrian dapur)
-    // (Perlu update backend sedikit jika ingin event khusus, tapi fetch ulang juga oke)
-    
-    return () => {
-        socket.off("status_updated");
-        socket.off("order_deleted");
-        socket.disconnect();
-    };
   }, [router]);
 
-  // 2. Ambil Data (Polling tiap 5 detik)
   const fetchKitchenOrders = async () => {
     try {
-      // Endpoint khusus dapur (hanya confirmed & cooking)
       const res = await api.get("/orders/kitchen");
       setOrders(res.data.data);
       setLoading(false);
@@ -63,26 +34,33 @@ export default function DapurDashboard() {
   };
 
   useEffect(() => {
-    // Auto refresh sementara (sebelum Socket.io)
-    const interval = setInterval(fetchKitchenOrders, 5000);
-    return () => clearInterval(interval);
+    socket.connect();
+    socket.on("status_updated", () => fetchKitchenOrders());
+    socket.on("order_deleted", () => fetchKitchenOrders());
+    socket.on("new_order", () => fetchKitchenOrders()); // Jika ada yg baru masuk antrian
+    
+    return () => {
+        socket.off("status_updated");
+        socket.off("order_deleted");
+        socket.off("new_order");
+    };
   }, []);
 
-  // 3. Aksi Koki
-  const handleAction = async (id, currentStatus) => {
+  const handleAction = async (id, actionType) => {
     let newStatus = "";
     
-    // Logika Tombol
-    if (currentStatus === "confirmed") {
-        newStatus = "cooking"; // Masuk -> Masak
-    } else if (currentStatus === "cooking") {
+    if (actionType === "start_cooking") {
+        newStatus = "cooking"; // Antrian -> Masak
+    } else if (actionType === "finish_cooking") {
         newStatus = "ready";   // Masak -> Selesai
+    } else if (actionType === "undo_cooking") {
+        newStatus = "confirmed"; // Masak -> Balikin ke Antrian (Undo)
     }
 
     try {
-      setLoading(true); // UI Feedback
+      setLoading(true); 
       await api.put(`/orders/${id}`, { status: newStatus });
-      await fetchKitchenOrders(); // Refresh data langsung
+      await fetchKitchenOrders();
     } catch (error) {
       alert("Gagal update status");
     } finally {
@@ -90,21 +68,17 @@ export default function DapurDashboard() {
     }
   };
 
-  // Fungsi Logout
   const handleLogout = () => {
     localStorage.clear();
     router.push("/login");
   };
 
-  // Filter Data untuk Tampilan 2 Kolom
   const queueList = orders.filter(o => o.status === 'confirmed');
   const cookingList = orders.filter(o => o.status === 'cooking');
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      
-      {/* NAVBAR DAPUR */}
-      <nav className="bg-gray-800 px-6 py-4 flex justify-between items-center shadow-lg border-b border-gray-700">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <nav className="bg-gray-800 px-6 py-4 flex justify-between items-center shadow-lg border-b border-gray-700 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-yellow-500 tracking-wider">👨‍🍳 DAPUR MONITOR</h1>
           <p className="text-xs text-gray-400">Koki: {username}</p>
@@ -114,17 +88,16 @@ export default function DapurDashboard() {
         </button>
       </nav>
 
-      {/* KONTEN UTAMA (2 KOLOM) */}
-      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-80px)]">
+      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden">
         
-        {/* KOLOM KIRI: ANTRIAN MASUK (Kuning) */}
-        <div className="bg-gray-800 rounded-2xl p-4 border-2 border-yellow-600 flex flex-col">
-          <h2 className="text-xl font-bold text-yellow-400 mb-4 flex justify-between items-center">
+        {/* KOLOM KIRI: ANTRIAN (Kuning) */}
+        <div className="bg-gray-800 rounded-2xl p-4 border-2 border-yellow-600 flex flex-col h-full overflow-hidden">
+          <h2 className="text-xl font-bold text-yellow-400 mb-4 flex justify-between items-center shrink-0">
             🔔 ANTRIAN BARU 
             <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">{queueList.length}</span>
           </h2>
           
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-2">
             {queueList.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-gray-600 italic">Belum ada pesanan masuk</div>
             ) : (
@@ -138,7 +111,7 @@ export default function DapurDashboard() {
                         {order.order_notes}
                     </p>
                     <button 
-                        onClick={() => handleAction(order.id, 'confirmed')}
+                        onClick={() => handleAction(order.id, 'start_cooking')}
                         className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 rounded-lg text-xl shadow-md transition-transform active:scale-95"
                     >
                         🔥 MULAI MASAK
@@ -149,14 +122,14 @@ export default function DapurDashboard() {
           </div>
         </div>
 
-        {/* KOLOM KANAN: SEDANG DIMASAK (Hijau/Biru) */}
-        <div className="bg-gray-800 rounded-2xl p-4 border-2 border-blue-500 flex flex-col">
-          <h2 className="text-xl font-bold text-blue-400 mb-4 flex justify-between items-center">
+        {/* KOLOM KANAN: SEDANG DIMASAK (Biru) */}
+        <div className="bg-gray-800 rounded-2xl p-4 border-2 border-blue-500 flex flex-col h-full overflow-hidden">
+          <h2 className="text-xl font-bold text-blue-400 mb-4 flex justify-between items-center shrink-0">
             🍳 SEDANG DIMASAK
             <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{cookingList.length}</span>
           </h2>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-2">
             {cookingList.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-gray-600 italic">Tidak ada yang dimasak</div>
             ) : (
@@ -164,17 +137,30 @@ export default function DapurDashboard() {
                 <div key={order.id} className="bg-gray-700 text-white p-5 rounded-xl shadow-lg border-l-8 border-blue-500">
                     <div className="flex justify-between items-start">
                         <h3 className="text-2xl font-bold">{order.customer_name}</h3>
-                        <div className="text-xs bg-blue-900 px-2 py-1 rounded text-blue-200">COOKING</div>
+                        <div className="text-xs bg-blue-900 px-2 py-1 rounded text-blue-200 animate-pulse">COOKING</div>
                     </div>
                     <p className="text-lg font-medium mt-2 whitespace-pre-line border-t border-gray-600 pt-2 my-3 text-gray-200">
                         {order.order_notes}
                     </p>
-                    <button 
-                        onClick={() => handleAction(order.id, 'cooking')}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-lg text-xl shadow-md transition-transform active:scale-95"
-                    >
-                        ✅ SELESAI SAJI
-                    </button>
+                    
+                    <div className="flex gap-3">
+                        {/* TOMBOL UNDO (BATAL MASAK) */}
+                        <button 
+                            onClick={() => handleAction(order.id, 'undo_cooking')}
+                            className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-4 px-4 rounded-lg text-sm transition-transform active:scale-95"
+                            title="Kembalikan ke antrian"
+                        >
+                            ↩️ BATAL
+                        </button>
+
+                        {/* TOMBOL SELESAI */}
+                        <button 
+                            onClick={() => handleAction(order.id, 'finish_cooking')}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-lg text-xl shadow-md transition-transform active:scale-95"
+                        >
+                            ✅ SELESAI SAJI
+                        </button>
+                    </div>
                 </div>
                 ))
             )}
