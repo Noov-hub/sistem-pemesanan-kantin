@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import api from "@/lib/axios"; // Pastikan axios.js Anda sudah benar
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import { socket } from "@/lib/socket";
 
 export default function MonitorPage() {
   const [queue, setQueue] = useState([]);
@@ -21,13 +22,41 @@ export default function MonitorPage() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+    // 1. Ambil data awal saat halaman dibuka
     fetchQueue();
-    // Auto refresh tiap 5 detik (Sementara sebelum pasang Socket.io)
-    const interval = setInterval(fetchQueue, 5000); 
-    return () => clearInterval(interval);
-  }, []);
 
+    // 2. Nyalakan Socket.io
+    socket.connect();
+
+    // 3. Pasang "Telinga" (Listener)
+    // Saat ada pesanan baru masuk...
+    socket.on("new_order", (newOrder) => {
+        // Tambahkan ke antrian (Logic optimis)
+        setQueue((prev) => [...prev, newOrder]);
+    });
+
+    // Saat ada status berubah (misal: new -> confirmed, atau cooking -> ready)
+    socket.on("status_updated", ({ id, status }) => {
+        setQueue((prev) => 
+            prev.map((item) => item.id === id ? { ...item, status } : item)
+        );
+    });
+
+    // Saat pesanan dihapus/selesai (completed)
+    // (Opsional: Jika completed dianggap hilang dari monitor)
+    socket.on("order_deleted", ({ id }) => {
+        setQueue((prev) => prev.filter((item) => item.id !== id));
+    });
+
+    // 4. Bersihkan saat pindah halaman (Cleanup)
+    return () => {
+        socket.off("new_order");
+        socket.off("status_updated");
+        socket.off("order_deleted");
+        socket.disconnect();
+    };
+  }, []);
   // Filter Data
   const newOrders = queue.filter((q) => q.status === "new");
   const cookingOrders = queue.filter((q) => ["confirmed", "cooking"].includes(q.status));
