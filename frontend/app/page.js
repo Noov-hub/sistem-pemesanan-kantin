@@ -1,65 +1,115 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import api from "@/lib/axios"; // Pastikan axios.js Anda sudah benar
+import Navbar from "@/components/Navbar";
+import Link from "next/link";
+
+export default function MonitorPage() {
+  const [queue, setQueue] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fungsi ambil data antrian publik
+  const fetchQueue = async () => {
+    try {
+      const res = await api.get("/orders/queue");
+      setQueue(res.data.data);
+    } catch (error) {
+      console.error("Gagal ambil antrian", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchQueue();
+    // Auto refresh tiap 5 detik (Sementara sebelum pasang Socket.io)
+    const interval = setInterval(fetchQueue, 5000); 
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter Data
+  const newOrders = queue.filter((q) => q.status === "new");
+  const cookingOrders = queue.filter((q) => ["confirmed", "cooking"].includes(q.status));
+  const readyOrders = queue.filter((q) => q.status === "ready");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <Navbar />
+
+      <div className="pt-24 px-4 max-w-7xl mx-auto">
+        
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Status Pesanan</h1>
+          <p className="text-gray-500 mt-2">Pantau status makananmu secara real-time</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Grid 3 Kolom */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* 1. SIAP DIAMBIL (HIJAU) */}
+          <div className="bg-green-50 rounded-2xl p-5 shadow-sm border border-green-100">
+            <h2 className="text-xl font-bold text-green-800 mb-4 flex items-center gap-2">
+                SIAP DIAMBIL
+            </h2>
+            {readyOrders.length === 0 ? (
+               <p className="text-green-800/40 italic text-sm text-center py-4">Kosong</p>
+            ) : (
+                <div className="space-y-3">
+                {readyOrders.map((item) => (
+                    <div key={item.id} className="bg-white p-4 rounded-xl shadow border-l-8 border-green-500 animate-bounce-slow">
+                        <div className="text-2xl font-black text-gray-800">{item.customer_name}</div>
+                        <div className="text-xs text-green-600 font-bold uppercase mt-1 tracking-wider">Silakan ke Kasir</div>
+                    </div>
+                ))}
+                </div>
+            )}
+          </div>
+
+          {/* 2. SEDANG DIMASAK (KUNING) */}
+          <div className="bg-yellow-50 rounded-2xl p-5 shadow-sm border border-yellow-100">
+            <h2 className="text-xl font-bold text-yellow-800 mb-4 flex items-center gap-2">
+              SEDANG DIMASAK
+            </h2>
+            <div className="space-y-2">
+              {cookingOrders.map((item) => (
+                <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400">
+                  <div className="font-bold text-lg text-gray-700">{item.customer_name}</div>
+                  <div className="text-xs text-gray-400">Mohon menunggu sebentar...</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. BELUM DIBAYAR (ABU) */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+            <h2 className="text-xl font-bold text-gray-600 mb-4 flex items-center gap-2">
+              NEW ORDER
+            </h2>
+            <div className="space-y-2">
+              {newOrders.map((item) => (
+                <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex justify-between items-center">
+                  <div className="font-medium text-gray-600">{item.customer_name}</div>
+                  <div className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">Bayar</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
-      </main>
+      </div>
+
+      {/* Tombol Melayang (FAB) */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs px-4">
+        <Link href="/pesan">
+            <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 rounded-full shadow-2xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 ring-4 ring-white">
+                <span className="text-xl">📝</span>
+                <span>BUAT PESANAN BARU</span>
+            </button>
+        </Link>
+      </div>
+
     </div>
   );
 }
