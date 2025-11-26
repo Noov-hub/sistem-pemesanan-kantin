@@ -23,6 +23,31 @@ export default function DapurDashboard() {
       setUsername(localStorage.getItem("username"));
       fetchKitchenOrders();
     }
+
+    // SETUP SOCKET
+    socket.connect();
+
+    // Listener Khusus Dapur
+    socket.on("status_updated", ({ id, status }) => {
+        // Trik Cerdas: Daripada update state manual yang rumit,
+        // kita panggil ulang fetchKitchenOrders() saja agar data pasti sinkron.
+        // Karena event ini jarang terjadi (tidak setiap detik), ini aman.
+        fetchKitchenOrders();
+    });
+
+    // Listener jika Kasir membatalkan/menghapus pesanan
+    socket.on("order_deleted", () => {
+        fetchKitchenOrders();
+    });
+    
+    // Listener jika ada pesanan baru dikonfirmasi kasir (Masuk antrian dapur)
+    // (Perlu update backend sedikit jika ingin event khusus, tapi fetch ulang juga oke)
+    
+    return () => {
+        socket.off("status_updated");
+        socket.off("order_deleted");
+        socket.disconnect();
+    };
   }, [router]);
 
   // 2. Ambil Data (Polling tiap 5 detik)
