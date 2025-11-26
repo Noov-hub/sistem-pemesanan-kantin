@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const db = require('./config/db'); // Import koneksi DB
-
+const userRoutes = require('./routes/userRoutes');
 dotenv.config();
 
 const app = express();
@@ -46,6 +46,7 @@ const orderRoutes = require('./routes/orderRoutes'); // <--- Tambah ini di atas
 // ... (kode socket io middleware)
 
 // Gunakan Route
+app.use('/api/users', userRoutes); // <--- Tambah ini
 app.use('/api/orders', orderRoutes); // <--- Tambah ini
 
 // ... (server.listen)
