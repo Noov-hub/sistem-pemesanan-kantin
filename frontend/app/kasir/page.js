@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { socket } from "@/lib/socket";
-
+import Link from "next/link";
 export default function KasirDashboard() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
@@ -263,6 +263,14 @@ export default function KasirDashboard() {
             ))}
           </div>
         )}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs px-4">
+        <Link href="/pesan">
+            <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 rounded-full shadow-2xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 ring-4 ring-white">
+                <span className="text-xl">📝</span>
+                <span>BUAT PESANAN BARU</span>
+            </button>
+        </Link>
+      </div>
       </div>
     </div>
   );
