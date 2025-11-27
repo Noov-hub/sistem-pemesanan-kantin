@@ -80,7 +80,7 @@ export default function DapurDashboard() {
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       <nav className="bg-gray-800 px-6 py-4 flex justify-between items-center shadow-lg border-b border-gray-700 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-yellow-500 tracking-wider">👨‍🍳 DAPUR MONITOR</h1>
+          <h1 className="text-2xl font-bold text-yellow-500 tracking-wider">DAPUR MONITOR</h1>
           <p className="text-xs text-gray-400">Koki: {username}</p>
         </div>
         <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-bold text-sm transition">
@@ -125,7 +125,7 @@ export default function DapurDashboard() {
         {/* KOLOM KANAN: SEDANG DIMASAK (Biru) */}
         <div className="bg-gray-800 rounded-2xl p-4 border-2 border-blue-500 flex flex-col h-full overflow-hidden">
           <h2 className="text-xl font-bold text-blue-400 mb-4 flex justify-between items-center shrink-0">
-            🍳 SEDANG DIMASAK
+            SEDANG DIMASAK
             <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">{cookingList.length}</span>
           </h2>
 

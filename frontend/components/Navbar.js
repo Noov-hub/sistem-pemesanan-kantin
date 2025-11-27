@@ -13,7 +13,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="font-bold text-xl text-blue-600 tracking-wider">
-              Kantin FPMIPA 🍜
+              Kantin FPMIPA
             </Link>
           </div>
 
@@ -43,7 +43,7 @@ export default function Navbar() {
               href="/login" 
               className="block px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition"
            >
-              🔐 Login Staff
+              Login Staff
           </Link>
           {/* Bisa tambah menu 'Tentang' atau 'Bantuan' disini */}
         </div>
