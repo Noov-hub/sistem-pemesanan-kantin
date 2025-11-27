@@ -104,7 +104,7 @@ export default function KasirDashboard() {
       <nav className="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-30">
         <div>
           <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-            Kasir Dashboard 👮‍♂️ 
+            Kasir Dashboard
             <span className="flex h-3 w-3 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -121,10 +121,10 @@ export default function KasirDashboard() {
         {/* TABS */}
         <div className="flex space-x-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
             {[
-                { id: "new", label: "🔔 Baru Masuk" },
-                { id: "active", label: "📋 Semua Aktif" },
-                { id: "kitchen", label: "👨‍🍳 Monitor Dapur" },
-                { id: "history", label: "📜 Riwayat" }
+                { id: "new", label: "Baru Masuk" },
+                { id: "active", label: "Semua Aktif" },
+                { id: "kitchen", label: "Monitor Dapur" },
+                { id: "history", label: "Riwayat" }
             ].map((tab) => (
                 <button
                     key={tab.id}
@@ -228,23 +228,23 @@ export default function KasirDashboard() {
                                 onClick={() => { if(confirm("Hapus pesanan?")) updateStatus(order.id, 'cancelled'); }}
                                 className="bg-red-50 text-red-600 py-2 rounded-lg text-xs font-bold hover:bg-red-100"
                             >
-                                🗑️ BATAL
+                                BATAL
                             </button>
 
                             {/* Tombol Kanan Berubah Sesuai Status */}
                             {order.status === 'new' && (
                                 <button onClick={() => updateStatus(order.id, 'confirmed')} className="bg-blue-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md">
-                                    💰 TERIMA
+                                    TERIMA
                                 </button>
                             )}
                             {order.status === 'ready' && (
                                 <button onClick={() => updateStatus(order.id, 'completed')} className="bg-green-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-green-700 shadow-md animate-bounce-slow">
-                                    ✅ AMBIL
+                                    AMBIL
                                 </button>
                             )}
                             {['confirmed', 'cooking'].includes(order.status) && (
                                 <button disabled className="bg-gray-100 text-gray-400 py-2 rounded-lg text-xs font-bold cursor-not-allowed">
-                                    ⏳ DAPUR
+                                    DAPUR
                                 </button>
                             )}
                              {['completed', 'cancelled'].includes(order.status) && (

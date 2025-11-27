@@ -93,7 +93,7 @@ export default function DapurDashboard() {
         {/* KOLOM KIRI: ANTRIAN (Kuning) */}
         <div className="bg-gray-800 rounded-2xl p-4 border-2 border-yellow-600 flex flex-col h-full overflow-hidden">
           <h2 className="text-xl font-bold text-yellow-400 mb-4 flex justify-between items-center shrink-0">
-            🔔 ANTRIAN BARU 
+            ANTRIAN BARU 
             <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-sm">{queueList.length}</span>
           </h2>
           
@@ -114,7 +114,7 @@ export default function DapurDashboard() {
                         onClick={() => handleAction(order.id, 'start_cooking')}
                         className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-black py-4 rounded-lg text-xl shadow-md transition-transform active:scale-95"
                     >
-                        🔥 MULAI MASAK
+                        MULAI MASAK
                     </button>
                 </div>
                 ))
@@ -150,7 +150,7 @@ export default function DapurDashboard() {
                             className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-4 px-4 rounded-lg text-sm transition-transform active:scale-95"
                             title="Kembalikan ke antrian"
                         >
-                            ↩️ BATAL
+                            BATAL
                         </button>
 
                         {/* TOMBOL SELESAI */}
@@ -158,7 +158,7 @@ export default function DapurDashboard() {
                             onClick={() => handleAction(order.id, 'finish_cooking')}
                             className="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-lg text-xl shadow-md transition-transform active:scale-95"
                         >
-                            ✅ SELESAI SAJI
+                            SELESAI SAJI
                         </button>
                     </div>
                 </div>

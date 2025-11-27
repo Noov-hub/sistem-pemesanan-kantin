@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-gray-100">
         
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Login Staff 🔐</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Login Staff</h1>
           <p className="text-sm text-gray-500">Masuk untuk mengelola pesanan</p>
         </div>
 

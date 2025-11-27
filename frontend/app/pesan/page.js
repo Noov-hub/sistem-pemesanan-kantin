@@ -39,7 +39,7 @@ export default function OrderPage() {
       </div>
 
       <div className="flex-1 flex flex-col justify-center p-6 max-w-md mx-auto w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mau pesan apa? 🍜</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mau pesan apa?</h1>
         <p className="text-gray-500 mb-8">Isi pesananmu di bawah ini.</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
