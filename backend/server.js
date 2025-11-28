@@ -4,7 +4,9 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const db = require('./config/db'); // Import koneksi DB
+const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes'); // utk admin
 dotenv.config();
 
 const app = express();
@@ -33,7 +35,7 @@ io.on('connection', (socket) => {
 
 // --- ROUTES SEDERHANA (TESTING) ---
 app.get('/', (req, res) => {
-    res.send('Backend Kantin FPMIPA is Running! 🚀');
+    res.send('Backend Kantin FPMIPA is Running!');
 });
 
 // Simpan io di dalam request agar bisa dipakai di Controller nanti
@@ -41,15 +43,15 @@ app.use((req, res, next) => {
     req.io = io;
     next();
 });
-const orderRoutes = require('./routes/orderRoutes'); // <--- Tambah ini di atas
 
-// ... (kode socket io middleware)
+
+
 
 // Gunakan Route
-app.use('/api/users', userRoutes); // <--- Tambah ini
-app.use('/api/orders', orderRoutes); // <--- Tambah ini
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
 
-// ... (server.listen)
 // --- JALANKAN SERVER ---
 const PORT = 5000;
 server.listen(PORT, () => {
