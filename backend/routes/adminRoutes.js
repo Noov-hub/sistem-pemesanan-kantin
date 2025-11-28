@@ -11,3 +11,5 @@ router.post('/create', verifyToken, verifyAdmin, userController.createUser);
 
 // patch handler untuk role user
 router.patch('/update-role/:id', verifyToken, verifyAdmin, userController.updateRoleUser);
+
+module.exports = router;
