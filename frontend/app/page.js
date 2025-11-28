@@ -88,7 +88,10 @@ useEffect(() => {
                 <div className="space-y-3">
                 {readyOrders.map((item) => (
                     <div key={item.id} className="bg-white p-4 rounded-xl shadow border-l-8 border-green-500 animate-bounce-slow">
-                        <div className="text-2xl font-black text-gray-800">{item.customer_name}</div>
+                        <div className="flex justify-between items-center">
+                          <div className="text-2xl font-black text-gray-800">{item.customer_name}</div>
+                          <span className="text-sm font mono text-gray-500">#{item.id}</span>
+                        </div>
                         <div className="text-xs text-green-600 font-bold uppercase mt-1 tracking-wider">Silakan ke Kasir</div>
                     </div>
                 ))}
@@ -104,7 +107,10 @@ useEffect(() => {
             <div className="space-y-2">
               {cookingOrders.map((item) => (
                 <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400">
-                  <div className="font-bold text-lg text-gray-700">{item.customer_name}</div>
+                  <div className="flex justify-between items-center">
+                    <div className="font-bold text-lg text-gray-700">{item.customer_name}</div>
+                    <span className="text-sm font-mono text-gray-500">#{item.id}</span>
+                  </div>
                   <div className="text-xs text-gray-400">Mohon menunggu sebentar...</div>
                 </div>
               ))}
@@ -119,8 +125,11 @@ useEffect(() => {
             <div className="space-y-2">
               {newOrders.map((item) => (
                 <div key={item.id} className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex justify-between items-center">
-                  <div className="font-medium text-gray-600">{item.customer_name}</div>
-                  <div className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">Bayar</div>
+                  <div className="font-medium text-gray-600 flex gap-2 items-center">
+                    <span>{item.customer_name}</span>
+                    <span className="text-xs text-gray-400 font-mono">#{item.id}</span>
+                  </div>
+                    <div className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">Bayar</div>
                 </div>
               ))}
             </div>
