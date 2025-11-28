@@ -1,36 +1,27 @@
 const db = require("../config/db");
-const dbcrypt = require('bcrypt.js');
-const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs'); // FIX: Typo import
 
 // AMBIL DATA SEMUA USER
 exports.getAllUser = async (req, res) => {
     try {
-        const { username, passwrd, role } = req.body;
-
-        // validasi role
-        if(!['admin'].includes(role)){
-            return res.status(400).json({ message: "Kamu bukan admin!"});
-        }
-
-        // ambil semua data user dengan query 
-        const [rows] = await db.execute("SELECT * FROM users");
+        // Validasi role sudah ditangani middleware verifyAdmin, jadi langsung query saja.
+        // Jangan select password!
+        const [rows] = await db.execute("SELECT id, username, role, created_at FROM users ORDER BY created_at DESC");
         res.status(200).json({ data: rows });
-    }catch (error){
+    } catch (error) {
         res.status(500).json({ message: "Gagal mengambil data user.." });
     }
 }
 
-// TAMBAH USER (hanya bisa diakses oleh admin)
+// TAMBAH USER
 exports.createUser = async (req, res) => {
     try {
         const { username, password, role } = req.body;
 
-        // Validasi Role
         if (!['cashier', 'kitchen', 'admin'].includes(role)) {
             return res.status(400).json({ message: "Role tidak valid!" });
         }
 
-        // Hash Password sebelum simpan
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await db.execute(
@@ -45,9 +36,9 @@ exports.createUser = async (req, res) => {
     }
 };
 
-// update role user
+// UPDATE ROLE
 exports.updateRoleUser = async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
         const { role } = req.body;
 
@@ -57,9 +48,8 @@ exports.updateRoleUser = async (req, res) => {
         }
 
         await db.execute("UPDATE users SET role = ? WHERE id = ?", [role, id]);
-
         res.status(200).json({ message: "Role berhasil diubah!" });
-    }catch (error){
+    } catch (error){
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
