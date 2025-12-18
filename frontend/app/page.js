@@ -158,7 +158,7 @@ useEffect(() => {
           </div>
 
           {/* 3. BELUM DIBAYAR (ABU) */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+          {/* <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
             <h2 className="text-xl font-bold text-gray-600 mb-4 flex items-center gap-2">
               NEW ORDER
             </h2>
@@ -173,7 +173,7 @@ useEffect(() => {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
 
         </div>
       </div>
