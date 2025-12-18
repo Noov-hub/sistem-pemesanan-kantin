@@ -64,17 +64,17 @@ exports.getActiveOrders = async (req, res) => {
 // 'New' tidak perlu (belum bayar), 'Ready' tidak perlu (sudah selesai masak).
 exports.getKitchenOrders = async (req, res) => {
     try {
+        // Logika FIFO (First In First Out) berdasarkan kapan dibayar
         const [rows] = await db.execute(`
             SELECT * FROM orders 
             WHERE status IN ('confirmed', 'cooking') 
-            ORDER BY updated_at ASC
+            ORDER BY confirmed_at ASC
         `);
         res.status(200).json({ data: rows });
     } catch (error) {
-        res.status(500).json({ message: "Server Error", error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
-
 // --- 4. GET NEW (Notifikasi Pesanan Masuk) ---
 // Khusus untuk tab "Pesanan Baru" di Kasir.
 exports.getNewOrders = async (req, res) => {
@@ -226,7 +226,7 @@ exports.undoCooking = async (req, res) => {
             SET status = 'confirmed', 
                 cooking_at = NULL, -- Reset waktu masak
                 updated_at = NOW() -- Log update tetap jalan
-                
+
             WHERE id = ? AND status = 'cooking'
         `, [id]);
 
