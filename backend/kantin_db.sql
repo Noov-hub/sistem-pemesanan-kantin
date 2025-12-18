@@ -39,7 +39,7 @@ CREATE TABLE `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('cashier','kitchen','customer') DEFAULT 'cashier',
+  `role` enum('cashier','kitchen','customer','admin') DEFAULT 'cashier',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)

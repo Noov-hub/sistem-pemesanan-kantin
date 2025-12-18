@@ -32,7 +32,7 @@ export default function LoginPage() {
       } else if (role === "kitchen") {
         router.push("/dapur");
       } else if (role === "admin") {
-        alert("Halaman Admin belum dibuat.");
+        router.push("/admin");
       } else {
         router.push("/");
       }
