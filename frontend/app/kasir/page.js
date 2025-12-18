@@ -77,7 +77,7 @@ export default function KasirDashboard() {
   }, [fetchOrders, activeTab]);
 
   // Fungsi KHUSUS Konfirmasi (Menembak Endpoint Confirm)
-  const confirmPayment = async (id) => {
+  const confirmOrder = async (id) => {
     try {
       // Menembak endpoint khusus agar confirmed_at terisi di DB
       await api.put(`/orders/${id}/confirm`); 
@@ -262,7 +262,8 @@ export default function KasirDashboard() {
 
                             {/* Tombol Kanan Berubah Sesuai Status */}
                             {order.status === 'new' && (
-                                <button onClick={() => updateStatus(order.id, 'confirmed')} className="bg-blue-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md">
+                                <button onClick={() => confirmOrder(order.id)} // FIX: implementasi confirmOrder
+                                className="bg-blue-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md">
                                     TERIMA
                                 </button>
                             )}
