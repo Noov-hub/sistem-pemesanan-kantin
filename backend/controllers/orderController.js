@@ -195,7 +195,7 @@ exports.confirmOrder = async (req, res) => {
     }
 };
 
-// [DAPUR] Mulai Masak (Bisa Batch/Banyak sekaligus)
+// [DAPUR] Mulai Masak (Bisa Batch/Banyak sekaligus) NOT IMPLEMENTED
 // Menerima body: { "ids": [101, 102, 105] }
 exports.startCookingBatch = async (req, res) => {
     try {
