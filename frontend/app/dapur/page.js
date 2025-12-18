@@ -10,6 +10,7 @@ export default function DapurDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -73,8 +74,11 @@ export default function DapurDashboard() {
     router.push("/login");
   };
 
-  const queueList = orders.filter(o => o.status === 'confirmed');
-  const cookingList = orders.filter(o => o.status === 'cooking');
+  const filteredOrders = orders.filter(o => 
+    o.order_notes.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const queueList = filteredOrders.filter(o => o.status === 'confirmed');
+  const cookingList = filteredOrders.filter(o => o.status === 'cooking');
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -87,6 +91,17 @@ export default function DapurDashboard() {
           KELUAR
         </button>
       </nav>
+
+      {/* SEARCH BAR */}
+      <div className="px-6 mt-4">
+        <input
+            type="text"
+            placeholder="🔍 Cari menu... (contoh: Nasi Goreng)"
+            className="w-full max-w-md px-4 py-3 rounded-full bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-yellow-500 outline-none placeholder-gray-500 shadow-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
       <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden">
         
