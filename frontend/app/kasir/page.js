@@ -131,16 +131,6 @@ export default function KasirDashboard() {
           </h1>
           <p className="text-xs text-gray-400">Halo, {username}</p>
         </div>
-        {/* INPUT SEARCH BARU */}
-        <div className="flex-1 mx-8 max-w-md">
-            <input 
-                type="text"
-                placeholder="🔍 Cari Nama / ID Pesanan..."
-                className="w-full px-4 py-2 border rounded-full bg-gray-100 focus:bg-white focus:ring-2 ring-blue-500 outline-none text-black"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-            />
-        </div>
         <button onClick={handleLogout} className="text-sm text-red-500 font-bold border border-red-200 px-3 py-1 rounded hover:bg-red-50">
           Logout
         </button>
@@ -198,15 +188,6 @@ export default function KasirDashboard() {
                     order.status === 'ready' ? 'border-green-500' : 'border-black'
                 }`}
               > 
-                {/* TOMBOL TERIMA (KONFIRMASI) */}
-                {order.status === 'new' && (
-                    <button 
-                        onClick={() => updateStatus(order.id, 'confirmed')} // Pastikan backend handle confirmed_at
-                        className="bg-blue-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-1"
-                    >
-                        💰 TERIMA UANG
-                    </button>
-                )}
                 {/* --- LOGIKA TAMPILAN: EDIT MODE vs NORMAL MODE --- */}
                 {editingId === order.id ? (
                     // TAMPILAN EDIT (DROPDOWN)
