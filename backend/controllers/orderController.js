@@ -127,20 +127,31 @@ exports.getPublicQueue = async (req, res) => {
 // 3. UPDATE: Ganti Status (Jantung Operasional)
 exports.updateOrderStatus = async (req, res) => {
     try {
-        const { id } = req.params;   // Ambil ID dari URL
-        const { status } = req.body; // Ambil Status Baru dari Body JSON
+        const { id } = req.params;
+        const { status } = req.body;
 
-        // Validasi Status (Sesuai ENUM database kita)
         const validStatuses = ['new', 'confirmed', 'cooking', 'ready', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Status tidak valid!" });
         }
 
-        // Update Database
-        await db.execute("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+        // LOGIKA CERDAS: Pilih kolom timestamp berdasarkan status
+        // Kita gunakan COALESCE agar jika sudah ada isinya (misal dari manual edit), tidak tertimpa waktu baru
+        let query = "UPDATE orders SET status = ?, updated_at = NOW()";
+        
+        if (status === 'cooking') {
+            query += ", cooking_at = COALESCE(cooking_at, NOW())";
+        } else if (status === 'ready') {
+            query += ", ready_at = COALESCE(ready_at, NOW())";
+        } else if (status === 'completed') {
+            query += ", completed_at = COALESCE(completed_at, NOW())";
+        }
+        // Note: 'confirmed' sengaja tidak ada di sini agar confirmed_at tidak berubah saat edit manual
+        
+        query += " WHERE id = ?";
 
-        // --- REAL-TIME MAGIC ---
-        // Beritahu semua layar (Kasir & Dapur) bahwa pesanan ID sekian berubah status
+        await db.execute(query, [status, id]);
+
         req.io.emit('status_updated', { id: parseInt(id), status });
 
         res.status(200).json({ message: `Status updated to ${status}` });
