@@ -183,7 +183,7 @@ exports.confirmOrder = async (req, res) => {
         // Waktu inilah yang jadi patokan antrian FIFO di dapur.
         await db.execute(`
             UPDATE orders 
-            SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW() 
+            SET payment_status = 'paid', status = 'confirmed', confirmed_at = NOW(), updated_at = NOW() 
             WHERE id = ? AND status = 'new'
         `, [id]);
 
