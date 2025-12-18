@@ -110,9 +110,9 @@ exports.getFinishedOrders = async (req, res) => {
 exports.getPublicQueue = async (req, res) => {
     try {
         // UPDATE: Menambahkan 'new' ke dalam daftar status yang ditampilkan
-        // Kita tetap hanya mengambil kolom penting (privasi terjaga)
+        // Kita tetap hanya mengambil kolom penting (privasi terjaga) untuk saat ini ga dulu, nanti bisa dipakai kalau sudah ada fitur login akun customer
         const [rows] = await db.execute(`
-            SELECT id, customer_name, status, created_at 
+            SELECT id, customer_name, order_notes, status, created_at 
             FROM orders 
             WHERE status IN ('new', 'confirmed', 'cooking', 'ready') 
             ORDER BY created_at ASC
