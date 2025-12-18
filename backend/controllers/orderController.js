@@ -187,3 +187,29 @@ exports.confirmOrder = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// [DAPUR] Mulai Masak (Bisa Batch/Banyak sekaligus)
+// Menerima body: { "ids": [101, 102, 105] }
+exports.startCookingBatch = async (req, res) => {
+    try {
+        const { ids } = req.body; // Array ID
+        if (!ids || ids.length === 0) return res.status(400).json({ message: "Tidak ada pesanan dipilih" });
+
+        // Ubah array [1,2] menjadi string "1,2" untuk SQL IN
+        // Note: Cara ini aman asalkan ids dipastikan array angka
+        const placeholder = ids.map(() => '?').join(',');
+        
+        await db.query(`
+            UPDATE orders 
+            SET status = 'cooking', cooking_at = NOW(), updated_at = NOW() 
+            WHERE id IN (${placeholder}) AND status = 'confirmed'
+        `, ids);
+
+        // Emit loop untuk update status di frontend
+        ids.forEach(id => req.io.emit('status_updated', { id, status: 'cooking' }));
+
+        res.status(200).json({ message: `${ids.length} pesanan mulai dimasak.` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
