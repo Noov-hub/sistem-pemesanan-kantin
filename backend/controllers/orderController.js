@@ -50,8 +50,8 @@ exports.getActiveOrders = async (req, res) => {
     try {
         const [rows] = await db.execute(`
             SELECT * FROM orders 
-            WHERE status NOT IN ('completed', 'cancelled') 
-            ORDER BY created_at ASC
+            WHERE status NOT IN ('new', 'completed', 'cancelled') 
+            ORDER BY confirmed_at ASC
         `);
         res.status(200).json({ data: rows });
     } catch (error) {
@@ -136,15 +136,16 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         // LOGIKA CERDAS: Pilih kolom timestamp berdasarkan status
-        // Kita gunakan COALESCE agar jika sudah ada isinya (misal dari manual edit), tidak tertimpa waktu baru
         let query = "UPDATE orders SET status = ?, updated_at = NOW()";
         
-        if (status === 'cooking') {
-            query += ", cooking_at = COALESCE(cooking_at, NOW())";
+        if (status === 'new') {
+            query += ", confirmed_at = NULL";
+        }else if (status === 'cooking') {
+            query += ", cooking_at = NOW()";
         } else if (status === 'ready') {
-            query += ", ready_at = COALESCE(ready_at, NOW())";
+            query += ", ready_at = NOW()";
         } else if (status === 'completed') {
-            query += ", completed_at = COALESCE(completed_at, NOW())";
+            query += ", completed_at = NOW()";
         }
         // Note: 'confirmed' sengaja tidak ada di sini agar confirmed_at tidak berubah saat edit manual
         
