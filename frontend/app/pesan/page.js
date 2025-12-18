@@ -18,8 +18,8 @@ export default function OrderPage() {
     setLoading(true);
     try {
       await api.post("/orders", { customer_name: name, order_notes: notes });
-      // Sukses -> Balik ke halaman monitor
-      router.push("/"); 
+      localStorage.setItem("current_order", JSON.stringify(res.data.data)); // Pastikan backend return data order lengkap
+      router.push("/");
     } catch (error) {
       console.error(error);
       alert("Gagal mengirim pesanan.");

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import api from "@/lib/axios"; // Pastikan axios.js Anda sudah benar
+import api from "@/lib/axios";
+import { socket } from "@/lib/socket";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import { socket } from "@/lib/socket";
 
 export default function MonitorPage() {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [myOrder, setMyOrder] = useState(null); // Data pesanan user ini
+  const [timeLeft, setTimeLeft] = useState(null); // Timer string
 
   // Fungsi ambil data antrian publik
   const fetchQueue = async () => {
@@ -21,6 +23,44 @@ export default function MonitorPage() {
       setLoading(false);
     }
   };
+
+// 1. Cek LocalStorage & Timer Logic
+  useEffect(() => {
+    // Cek apakah ada ID tersimpan
+    const storedOrder = JSON.parse(localStorage.getItem("current_order"));
+    
+    if (storedOrder) {
+        // Cek apakah pesanan masih ada di antrian (belum selesai)
+        const found = queue.find(q => q.id === storedOrder.id);
+        if (found) {
+            setMyOrder(found);
+            
+            // LOGIC TIMER (Khusus status New)
+            if (found.status === 'new') {
+                const createdTime = new Date(found.created_at).getTime();
+                const deadline = createdTime + (10 * 60 * 1000); // +10 Menit
+                
+                const interval = setInterval(() => {
+                    const now = new Date().getTime();
+                    const distance = deadline - now;
+                    
+                    if (distance < 0) {
+                        setTimeLeft("EXPIRED");
+                        clearInterval(interval);
+                    } else {
+                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                        setTimeLeft(`${minutes}m ${seconds}s`);
+                    }
+                }, 1000);
+                return () => clearInterval(interval);
+            }
+        } else {
+            // Kalau tidak ketemu di queue, mungkin sudah completed/cancelled -> Hapus local
+            if (myOrder) localStorage.removeItem("current_order");
+        }
+    }
+  }, [queue]);
 
 useEffect(() => {
     // 1. Ambil data awal saat halaman dibuka
@@ -73,7 +113,30 @@ useEffect(() => {
           <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Status Pesanan</h1>
           <p className="text-gray-500 mt-2">Pantau status makananmu secara real-time</p>
         </div>
-
+        {/* --- FLOATING CARD: MY ORDER --- */}
+        {myOrder && (
+          <div className="fixed top-20 right-4 z-40 w-80 bg-white rounded-xl shadow-2xl border-2 border-blue-600 overflow-hidden animate-slide-in">
+              <div className="bg-blue-600 text-white p-3 font-bold flex justify-between">
+                  <span>Pesanan Anda #{myOrder.id}</span>
+                  <span className="bg-white text-blue-600 px-2 rounded text-xs flex items-center">{myOrder.status}</span>
+              </div>
+              <div className="p-4">
+                  <h3 className="font-bold text-lg">{myOrder.customer_name}</h3>
+                  
+                  {myOrder.status === 'new' ? (
+                      <div className="mt-3 bg-red-50 border border-red-200 p-3 rounded-lg text-center">
+                          <p className="text-xs text-red-600 font-bold mb-1">SEGERA KE KASIR!</p>
+                          <p className="text-2xl font-mono text-red-700 font-black">{timeLeft || "..."}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">Otomatis batal jika waktu habis</p>
+                      </div>
+                  ) : (
+                      <div className="mt-3 text-center text-gray-500 text-sm">
+                          Mohon tunggu, pesanan sedang diproses.
+                      </div>
+                  )}
+              </div>
+          </div>
+        )}
         {/* Grid 3 Kolom */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
