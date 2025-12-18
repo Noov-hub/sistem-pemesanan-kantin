@@ -129,7 +129,6 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        console.log(id, status);
         const validStatuses = ['new', 'confirmed', 'cooking', 'ready', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Status tidak valid!" });
@@ -144,8 +143,6 @@ exports.updateOrderStatus = async (req, res) => {
             query += ", cooking_at = NOW()";
         } else if (status === 'ready') {
             query += ", ready_at = NOW()";
-        } else if (status === 'completed') {
-            query += ", completed_at = NOW()";
         }
         // Note: 'confirmed' sengaja tidak ada di sini agar confirmed_at tidak berubah saat edit manual
         
