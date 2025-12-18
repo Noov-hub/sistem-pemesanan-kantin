@@ -129,7 +129,7 @@ exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-
+        console.log(id, status);
         const validStatuses = ['new', 'confirmed', 'cooking', 'ready', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({ message: "Status tidak valid!" });
@@ -190,9 +190,7 @@ exports.confirmOrder = async (req, res) => {
             WHERE id = ? AND status = 'new'
         `, [id]);
 
-        req.io.emit('status_updated', { id, status: 'confirmed' });
-        // Trigger khusus agar Dapur bunyi
-        req.io.emit('new_kitchen_order'); 
+        req.io.emit('status_updated', { id: parseInt(id), status: 'confirmed' });
 
         res.status(200).json({ message: "Pembayaran dikonfirmasi. Masuk antrian dapur." });
     } catch (error) {
