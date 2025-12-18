@@ -213,3 +213,26 @@ exports.startCookingBatch = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// [DAPUR] Undo Masak (Human Error Handler)
+// Mengembalikan Cooking -> Confirmed
+// CRITICAL LOGIC: Jangan ubah 'confirmed_at'. Biarkan waktu antrian asli.
+exports.undoCooking = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        await db.execute(`
+            UPDATE orders 
+            SET status = 'confirmed', 
+                cooking_at = NULL, -- Reset waktu masak
+                updated_at = NOW() -- Log update tetap jalan
+                
+            WHERE id = ? AND status = 'cooking'
+        `, [id]);
+
+        req.io.emit('status_updated', { id, status: 'confirmed' });
+        res.status(200).json({ message: "Undo berhasil. Kembali ke antrian." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
