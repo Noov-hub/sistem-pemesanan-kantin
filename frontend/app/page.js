@@ -9,8 +9,46 @@ import Link from "next/link";
 export default function MonitorPage() {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [myOrder, setMyOrder] = useState(null); // Data pesanan user ini
-  const [timeLeft, setTimeLeft] = useState(null); // Timer string
+  const [myOrders, setMyOrders] = useState([]); // List ID pesanan user
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [isMyOrderOpen, setIsMyOrderOpen] = useState(false); // Toggle visibility
+
+  // 1. Cek LocalStorage Initial
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("my_orders") || "[]");
+    setMyOrders(stored);
+
+    // Timer Ticker
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Hitung sisa waktu
+  const getTimeLeft = (createdAt) => {
+    const createdTime = new Date(createdAt).getTime();
+    const deadline = createdTime + (10 * 60 * 1000); // 10 menit
+    const distance = deadline - currentTime;
+
+    if (distance < 0) return "EXPIRED";
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    return `${minutes}m ${seconds}s`;
+  };
+
+  // Filter My Orders based on Queue
+  // Hanya tampilkan jika ada di queue (artinya status masih active) DAN statusnya 'new'
+  const activeMyOrders = myOrders.filter(localOrder => {
+      const matchInQueue = queue.find(q => q.id === localOrder.id);
+      return matchInQueue && matchInQueue.status === 'new';
+  }).map(localOrder => {
+      // Map ke data terbaru dari queue (untuk timer created_at yg akurat dari server)
+      return queue.find(q => q.id === localOrder.id);
+  });
+
+  // Update local storage jika ada perubahan (opsional, tapi bagus buat sync)
+  // Tapi requirement bilang: "jika sudah confirmed atau cancelled maka akan hilang dari card"
+  // Jadi logic filter di atas sudah cukup untuk display.
+
 
   // Fungsi ambil data antrian publik
   const fetchQueue = async () => {
@@ -23,44 +61,6 @@ export default function MonitorPage() {
       setLoading(false);
     }
   };
-
-// 1. Cek LocalStorage & Timer Logic
-  useEffect(() => {
-    // Cek apakah ada ID tersimpan
-    const storedOrder = JSON.parse(localStorage.getItem("current_order"));
-    
-    if (storedOrder) {
-        // Cek apakah pesanan masih ada di antrian (belum selesai)
-        const found = queue.find(q => q.id === storedOrder.id);
-        if (found) {
-            setMyOrder(found);
-            
-            // LOGIC TIMER (Khusus status New)
-            if (found.status === 'new') {
-                const createdTime = new Date(found.created_at).getTime();
-                const deadline = createdTime + (10 * 60 * 1000); // +10 Menit
-                
-                const interval = setInterval(() => {
-                    const now = new Date().getTime();
-                    const distance = deadline - now;
-                    
-                    if (distance < 0) {
-                        setTimeLeft("EXPIRED");
-                        clearInterval(interval);
-                    } else {
-                        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                        setTimeLeft(`${minutes}m ${seconds}s`);
-                    }
-                }, 1000);
-                return () => clearInterval(interval);
-            }
-        } else {
-            // Kalau tidak ketemu di queue, mungkin sudah completed/cancelled -> Hapus local
-            if (myOrder) localStorage.removeItem("current_order");
-        }
-    }
-  }, [queue]);
 
 useEffect(() => {
     // 1. Ambil data awal saat halaman dibuka
@@ -113,30 +113,7 @@ useEffect(() => {
           <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">Status Pesanan</h1>
           <p className="text-gray-500 mt-2">Pantau status makananmu secara real-time</p>
         </div>
-        {/* --- FLOATING CARD: MY ORDER --- */}
-        {myOrder && (
-          <div className="fixed top-20 right-4 z-40 w-80 bg-white rounded-xl shadow-2xl border-2 border-blue-600 overflow-hidden animate-slide-in">
-              <div className="bg-blue-600 text-white p-3 font-bold flex justify-between">
-                  <span>Pesanan Anda #{myOrder.id}</span>
-                  <span className="bg-white text-blue-600 px-2 rounded text-xs flex items-center">{myOrder.status}</span>
-              </div>
-              <div className="p-4">
-                  <h3 className="font-bold text-lg">{myOrder.customer_name}</h3>
-                  
-                  {myOrder.status === 'new' ? (
-                      <div className="mt-3 bg-red-50 border border-red-200 p-3 rounded-lg text-center">
-                          <p className="text-xs text-red-600 font-bold mb-1">SEGERA KE KASIR!</p>
-                          <p className="text-2xl font-mono text-red-700 font-black">{timeLeft || "..."}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">Otomatis batal jika waktu habis</p>
-                      </div>
-                  ) : (
-                      <div className="mt-3 text-center text-gray-500 text-sm">
-                          Mohon tunggu, pesanan sedang diproses.
-                      </div>
-                  )}
-              </div>
-          </div>
-        )}
+
         {/* Grid 3 Kolom */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
@@ -201,14 +178,61 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Tombol Melayang (FAB) */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs px-4">
-        <Link href="/pesan">
-            <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 rounded-full shadow-2xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 ring-4 ring-white">
-                <span className="text-xl">📝</span>
-                <span>BUAT PESANAN BARU</span>
-            </button>
-        </Link>
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-sm px-4 flex flex-col gap-4">
+        
+        {/* LIST PESANAN SAYA (Toggle) */}
+        {isMyOrderOpen && activeMyOrders.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 animate-slide-up mx-auto w-full mb-2">
+                <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
+                    <h3 className="font-bold text-lg">Pesanan Saya ({activeMyOrders.length})</h3>
+                    <button onClick={() => setIsMyOrderOpen(false)} className="text-white opacity-80 hover:opacity-100">▼</button>
+                </div>
+                <div className="max-h-60 overflow-y-auto p-2 space-y-2">
+                    {activeMyOrders.map(order => {
+                        const timeLeft = getTimeLeft(order.created_at);
+                        const isExpired = timeLeft === "EXPIRED";
+                        
+                        return (
+                            <div key={order.id} className="bg-gray-50 p-3 rounded-lg border border-gray-100 relative">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-bold text-gray-800">{order.customer_name}</div>
+                                        <div className="text-xs text-gray-500 font-mono">#{order.id}</div>
+                                    </div>
+                                    <div className={`px-2 py-1 rounded text-xs font-bold ${isExpired ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                                        {isExpired ? "BATAL" : timeLeft}
+                                    </div>
+                                </div>
+                                <div className="mt-2 text-sm text-gray-600 border-t border-gray-200 pt-1">
+                                    {order.order_notes}
+                                </div>
+                                {isExpired && <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center text-red-600 font-black rotate-12">EXPIRED</div>}
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        )}
+
+        {/* BUTTON GROUP */}
+        <div className="flex flex-col gap-2">
+            {activeMyOrders.length > 0 && (
+                <button 
+                    onClick={() => setIsMyOrderOpen(!isMyOrderOpen)}
+                    className="w-full bg-white text-blue-600 font-bold py-3 rounded-xl shadow-lg border border-blue-100 flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                >
+                    <span>🛍️</span>
+                    <span>{isMyOrderOpen ? "Tutup Pesanan Saya" : `Lihat Pesanan Saya (${activeMyOrders.length})`}</span>
+                </button>
+            )}
+
+            <Link href="/pesan" className="w-full">
+                <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold py-4 rounded-xl shadow-2xl flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 ring-4 ring-white">
+                    <span className="text-xl">📝</span>
+                    <span>BUAT PESANAN BARU</span>
+                </button>
+            </Link>
+        </div>
       </div>
 
     </div>

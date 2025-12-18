@@ -18,7 +18,15 @@ export default function OrderPage() {
     setLoading(true);
     try {
       const res = await api.post("/orders", { customer_name: name, order_notes: notes });
-      localStorage.setItem("current_order", JSON.stringify(res.data.data)); // Pastikan backend return data order lengkap
+      
+      // Simpan ke localStorage (Array)
+      const existingOrders = JSON.parse(localStorage.getItem("my_orders") || "[]");
+      const updatedOrders = [...existingOrders, res.data.data];
+      localStorage.setItem("my_orders", JSON.stringify(updatedOrders));
+      
+      // Cleanup legacy key if exists
+      localStorage.removeItem("current_order");
+
       router.push("/");
     } catch (error) {
       console.error(error);
