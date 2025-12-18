@@ -17,7 +17,7 @@ export default function OrderPage() {
 
     setLoading(true);
     try {
-      await api.post("/orders", { customer_name: name, order_notes: notes });
+      const res = await api.post("/orders", { customer_name: name, order_notes: notes });
       localStorage.setItem("current_order", JSON.stringify(res.data.data)); // Pastikan backend return data order lengkap
       router.push("/");
     } catch (error) {
