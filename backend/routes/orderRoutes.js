@@ -13,7 +13,7 @@ router.get('/active', verifyToken, orderController.getActiveOrders);// URL: /api
 router.get('/kitchen', verifyToken, orderController.getKitchenOrders);// URL: /api/orders/kitchen
 router.get('/new', verifyToken, orderController.getNewOrders);// URL: /api/orders/new
 router.get('/history', verifyToken, orderController.getFinishedOrders);// URL: /api/orders/history
-router.put('/:id/confirm', orderController.confirmOrder);
+router.put('/:id/confirm', verifyToken, orderController.confirmOrder);
 // --- PUT & DELETE (By ID) ---
 // Wajib ditaruh PALING BAWAH agar tidak bentrok dengan route di atas
 router.put('/:id', verifyToken, orderController.updateOrderStatus);
