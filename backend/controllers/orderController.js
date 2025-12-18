@@ -163,3 +163,27 @@ exports.deleteOrder = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 };
+
+// [KASIR] Konfirmasi Pembayaran (Single/Batch)
+// Ini mengubah status New -> Confirmed DAN mencatat waktu antrian (confirmed_at)
+exports.confirmOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // PENTING: Kita set confirmed_at = NOW() saat pembayaran terjadi.
+        // Waktu inilah yang jadi patokan antrian FIFO di dapur.
+        await db.execute(`
+            UPDATE orders 
+            SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW() 
+            WHERE id = ? AND status = 'new'
+        `, [id]);
+
+        req.io.emit('status_updated', { id, status: 'confirmed' });
+        // Trigger khusus agar Dapur bunyi
+        req.io.emit('new_kitchen_order'); 
+
+        res.status(200).json({ message: "Pembayaran dikonfirmasi. Masuk antrian dapur." });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
