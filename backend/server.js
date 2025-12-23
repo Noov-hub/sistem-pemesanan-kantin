@@ -11,7 +11,7 @@ dotenv.config();
 
 //IMPORT LIBRARY KEAMANAN
 const helmet = require('helmet');
-
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
@@ -37,7 +37,14 @@ io.on('connection', (socket) => {
         console.log('User disconnected:', socket.id);
     });
 });
-
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // Durasi: 15 Menit
+	max: 100, // Maksimal 100 request per IP dalam durasi tersebut
+	standardHeaders: true, // Info limit di header (RateLimit-*)
+	legacyHeaders: false, // Nonaktifkan header X-RateLimit-* lama
+    message: "Terlalu banyak request dari IP ini, coba lagi nanti."
+});
+app.use(limiter);
 // --- ROUTES SEDERHANA (TESTING) ---
 app.get('/', (req, res) => {
     res.send('Backend Kantin FPMIPA is Running!');
