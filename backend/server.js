@@ -9,6 +9,10 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes'); // utk admin
 dotenv.config();
 
+//IMPORT LIBRARY KEAMANAN
+const helmet = require('helmet');
+
+
 const app = express();
 const server = http.createServer(app);
 
@@ -24,6 +28,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json()); // Agar bisa baca JSON dari request body
 
+app.use(helmet());// HELMET: Melindungi dari berbagai serangan HTTP Headers (XSS, Clickjacking, Sniffing, dll) 
 // --- SOCKET.IO CONNECTION ---
 io.on('connection', (socket) => {
     console.log('⚡ A user connected:', socket.id);
