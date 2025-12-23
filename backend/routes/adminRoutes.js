@@ -12,4 +12,7 @@ router.post('/create', verifyToken, verifyAdmin, userController.createUser);
 // patch handler untuk role user
 router.patch('/update-role/:id', verifyToken, verifyAdmin, userController.updateRoleUser);
 
+// delete handler untuk delete user
+router.delete('/delete/:id', verifyToken, verifyAdmin, userController.deleteUser);
+
 module.exports = router;

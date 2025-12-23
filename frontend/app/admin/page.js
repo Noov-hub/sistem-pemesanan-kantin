@@ -53,6 +53,20 @@ export default function AdminDashboard() {
         }
     };
 
+    // 4. Fungsi Delete User
+    const handleDeleteUser = async (e) => {
+        if(!confirm("Apakah Anda yakin ingin menghapus user ini?")) return;
+        setLoading(true);
+        try{
+            await api.post(`/admin/delete/${id}`);
+            alert("User berhasil dihapus!");
+            fetchUsers();
+        }catch(error){
+            console.error(error);
+            alert(error.response?.data?.message || "Gagal menghapus user");
+        }
+    };
+
     const handleLogout = () => {
         localStorage.clear();
         router.push("/login");
@@ -136,6 +150,7 @@ export default function AdminDashboard() {
                                     <th className="p-3 border-b">Username</th>
                                     <th className="p-3 border-b">Role</th>
                                     <th className="p-3 border-b">Dibuat Pada</th>
+                                    <th className="p-3 border-b">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="text-gray-700 text-sm">
@@ -154,6 +169,16 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="p-3 text-gray-500">
                                             {new Date(u.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td className="p-3 text-gray-500">
+                                            <button>
+                                                Update
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser(u.id)}
+                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition">
+                                                Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
