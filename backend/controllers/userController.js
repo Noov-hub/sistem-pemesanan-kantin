@@ -53,3 +53,14 @@ exports.updateRoleUser = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
+// HAPUS ROLE
+exports.deleteUser = async (req, res) => {
+    try{
+        const { id } = req.params;
+        
+        await db.execute("DELETE FROM users WHERE id = ?", [id]);
+    }catch(error){
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+}
