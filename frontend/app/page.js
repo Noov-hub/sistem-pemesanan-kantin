@@ -82,7 +82,12 @@ useEffect(() => {
             prev.map((item) => item.id === id ? { ...item, status } : item)
         );
     });
-
+    // Saat ada status karena clean-up
+    socket.on("status_updated_cleanup", ({ id, status }) => {
+        setQueue((prev) => 
+            prev.map((item) => item.id === id ? { ...item, status } : item)
+        );
+    });
     // Saat pesanan dihapus/selesai (completed)
     // (Opsional: Jika completed dianggap hilang dari monitor)
     socket.on("order_deleted", ({ id }) => {

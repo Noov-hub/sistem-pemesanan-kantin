@@ -92,7 +92,7 @@ cron.schedule('* * * * *', async () => {
             //    Dengan mengirim 'status_updated' per ID, frontend Customer akan 
             //    mendeteksi perubahan ini dan otomatis menghapus kartu dari layar "Pesanan Saya".
             ids.forEach(id => {
-                io.emit('status_updated', { id, status: 'cancelled' });
+                io.emit('status_updated_cleanup', { id, status: 'cancelled' });
             });
             
             // Opsional: Refresh kasir secara umum (jika diperlukan)
