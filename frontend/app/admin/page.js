@@ -67,6 +67,22 @@ export default function AdminDashboard() {
         }
     };
 
+    // 5. Fungsi Update Role User
+    const handleUpdateRoleUser = async (id, currentRole) =>{
+        const newRole = prompt("Masukkan role baru (admin/cashier/kitchen): ", currentRole);
+        setLoading(true);
+
+        if(newRole && newRole !== currentRole){
+            try{
+                await api.patch(`/admin/update-role/${id}`, { role: newRole });
+                alert("Role berhasil diupdate!");
+                fetchUsers();
+            }catch (error){
+                alert(error.response?.data?.message || "Gagal update role.");
+            }
+        }
+    };
+
     const handleLogout = () => {
         localStorage.clear();
         router.push("/login");
@@ -171,7 +187,9 @@ export default function AdminDashboard() {
                                             {new Date(u.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="p-3 text-gray-500">
-                                            <button>
+                                            <button
+                                                onClick={() => handleUpdateRoleUser(u.id, u.role)}
+                                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs transition">
                                                 Update
                                             </button>
                                             <button
