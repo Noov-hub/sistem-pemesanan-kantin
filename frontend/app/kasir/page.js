@@ -61,7 +61,7 @@ export default function KasirDashboard() {
         playSound();
         if (activeTab === 'new' || activeTab === 'active') fetchOrders();
     });
-
+    
     socket.on("status_updated", ({ status }) => {
         if (status === 'ready') playSound();
         fetchOrders();
@@ -69,10 +69,17 @@ export default function KasirDashboard() {
 
     socket.on("order_deleted", () => fetchOrders());
 
+    // --- EVENT KHUSUS DARI CRON JOB ---
+    socket.on("refresh_kasir", () => {
+        console.log("♻️ Auto-cancel triggered refresh");
+        fetchOrders();
+    });
+    
     return () => {
         socket.off("new_order");
         socket.off("status_updated");
         socket.off("order_deleted");
+        socket.off("refresh_kasir");
     };
   }, [fetchOrders, activeTab]);
 
