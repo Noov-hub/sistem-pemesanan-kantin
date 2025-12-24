@@ -21,9 +21,10 @@ export default function RootLayout({ children }) {
     <html lang="en" className="w-full h-full">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased
-          w-full h-full overflow-hidden
-          bg-[url('/background.jpeg')] bg-cover bg-center bg-no-repeat`}
+          `}
       >
+        {/* w-full h-full overflow-hidden
+          bg-[url('/background.jpeg')] bg-cover bg-center bg-no-repeat */}
         {/* Overlay gelap supaya teks kebaca */}
         <div className="w-full h-full bg-black/50">
           {children}
