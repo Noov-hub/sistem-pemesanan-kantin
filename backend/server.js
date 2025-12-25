@@ -45,7 +45,7 @@ const limiter = rateLimit({
     max: 100, // Maks limit untuk Guest/Customer
     standardHeaders: true,
     legacyHeaders: false,
-    message: "Terlalu banyak request, santai dulu kawan.",
+    message: "Terlalu banyak request.",
     
     // FUNGSI SKIP: Return 'true' jika ingin meloloskan request ini dari limit
     skip: (req, res) => {
