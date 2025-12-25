@@ -8,7 +8,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes'); // utk admin
 const cron = require('node-cron'); // IMPORT CRON JOB
-
+const jwt = require('jsonwebtoken'); // [TAMBAHAN: Import JWT untuk cek role]
 dotenv.config();
 
 // IMPORT LIBRARY KEAMANAN
@@ -39,12 +39,45 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- RATE LIMITER CERDAS ---
 const limiter = rateLimit({
-	windowMs: 15 * 60 * 1000, 
-	max: 100, 
-	standardHeaders: true, 
-	legacyHeaders: false, 
-    message: "Terlalu banyak request dari IP ini, coba lagi nanti."
+    windowMs: 15 * 60 * 1000, // 15 Menit
+    max: 100, // Maks limit untuk Guest/Customer
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Terlalu banyak request, santai dulu kawan.",
+    
+    // FUNGSI SKIP: Return 'true' jika ingin meloloskan request ini dari limit
+    skip: (req, res) => {
+        // 1. LOLOSKAN LOCALHOST (Agar testing Anda tidak error 429 lagi)
+        if (req.ip === '::1' || req.ip === '127.0.0.1') {
+            return true; 
+        }
+
+        // 2. LOLOSKAN STAFF (Admin/Kasir/Dapur)
+        // Kita intip Header Authorization-nya
+        const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                // Verifikasi token secara manual di sini
+                // (Kita butuh secret key dari .env)
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                
+                // Cek Role: Jika staf internal, SKIP limit
+                if (['admin', 'kasir', 'dapur'].includes(decoded.role)) {
+                    return true; // "Silakan lewat, Tuan Bos"
+                }
+            } catch (error) {
+                // Token tidak valid/expired, biarkan kena limit
+                return false; 
+            }
+        }
+
+        // Default: JANGAN SKIP (Hitung limit) untuk Guest/Customer biasa
+        return false;
+    }
 });
 app.use(limiter);
 
