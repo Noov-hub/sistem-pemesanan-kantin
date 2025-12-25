@@ -103,6 +103,43 @@ cron.schedule('* * * * *', async () => {
     }
 });
 
+// --- HOUSEKEEPING: Hapus Permanen Sampah Lama ---
+// Jalan setiap hari jam 03:00 pagi
+cron.schedule('0 3 * * *', async () => {
+    try {
+        // Ambil konfigurasi dari .env, default ke 90 dan 365 hari jika tidak disetting
+        const RETENTION_DAYS_CANCELLED = parseInt(process.env.DATA_RETENTION_DAYS_CANCELLED) || 90; 
+        const RETENTION_DAYS_COMPLETED = parseInt(process.env.DATA_RETENTION_DAYS_COMPLETED) || 365; 
+
+        console.log(`🧹 Running Daily Cleanup...`);
+        console.log(`   - Cancelled > ${RETENTION_CANCELLED} days`);
+        console.log(`   - Completed > ${RETENTION_COMPLETED} days`);
+
+        // HAPUS HANYA YANG CANCELLED (Sampah Murni)
+        // Kita biarkan yang 'completed' tetap ada untuk laporan keuangan
+        const [resultCancelled] = await db.execute(`
+            DELETE FROM orders 
+            WHERE status = 'cancelled' 
+            AND created_at < (NOW() - INTERVAL ? DAY)
+        `, [RETENTION_DAYS_CANCELLED]); // Gunakan prepared statement (?) agar aman
+        const [resultCompleted] = await db.execute(`
+            DELETE FROM orders 
+            WHERE status = 'completed' 
+            AND created_at < (NOW() - INTERVAL ? DAY)
+        `, [RETENTION_DAYS_COMPLETED]); // Gunakan prepared statement (?) agar aman
+
+        // OPSIONAL: Hapus yang 'completed' jika sudah SANGAT LAMA (misal 2x lipat waktu retensi)
+        // Atau biarkan saja selamanya jika ingin data penjualan abadi.
+
+        // LOGGING HASIL
+        if (resultCancelled.affectedRows > 0) console.log(`✅ Deleted ${resultCancelled.affectedRows} cancelled orders.`);
+        if (resultCompleted.affectedRows > 0) console.log(`✅ Deleted ${resultCompleted.affectedRows} old completed orders.`);
+        if (resultCancelled.affectedRows === 0 && resultCompleted.affectedRows === 0) console.log('✨ Database is clean.');
+
+    } catch (error) {
+        console.error('❌ Daily Cleanup Error:', error);
+    }
+});
 // --- JALANKAN SERVER ---
 const PORT = 5000;
 server.listen(PORT, () => {
