@@ -56,17 +56,17 @@ export default function OrderPage() {
             <input
               type="text"
               className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-lg text-black"
-              placeholder="Contoh: Ibnu"
+              placeholder="Contoh: Budi"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Catatan Pesanan</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Catatan Pesanan (1 pesanan yaa)</label>
             <textarea
               className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none h-40 text-lg text-black"
-              placeholder="Contoh:&#10;1x Nasi Goreng (Pedas)&#10;1x Es Teh"
+              placeholder="Contoh:&#10;Nasi Goreng (Pedas)"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
