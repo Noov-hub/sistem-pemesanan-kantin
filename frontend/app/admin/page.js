@@ -1,5 +1,7 @@
 "use client";
 
+import css from "../admin/admin.css";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
@@ -211,6 +213,63 @@ export default function AdminDashboard() {
                 </div>
 
             </div>
+            {isEditOpen && (
+                <div className="rounded-md p-4m">
+                    <div className="popUp p-6 rounded-xl shadow-2xl w-1/2 max-w-md border-2">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Edit User Role</h2>
+                        <p className="mb-4 text-sm text-gray-600">Editing: <span className="font-bold">{currentUsername}</span></p>
+                        
+                        <form onSubmit={handleUpdateUser} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Username</label>
+                                <input 
+                                type="text"
+                                required
+                                className="w-1/2 p-2 border rounded mt-1 bg-gray-50 text-black"
+                                value={selectedUser.username}
+                                onChange={(e) => setSelectedUser({...selectedUser, username: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Password</label>
+                                <input 
+                                type="text"
+                                className="w-1/2"
+                                placeholder="Masukkan password baru"
+                                onChange={(e) => setSelectedUser({...selectedUser, password: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Role</label>
+                                <select 
+                                    className="w-full p-2 border rounded mt-1 bg-gray-50 text-black"
+                                    value={selectedUser.role}
+                                    onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value})}
+                                >
+                                    <option value="cashier">Cashier</option>
+                                    <option value="kitchen">Kitchen</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsEditOpen(false)} 
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 rounded transition"
+                                >
+                                    CANCEL
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition"
+                                >
+                                    {loading ? "Saving..." : "SAVE CHANGES"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
