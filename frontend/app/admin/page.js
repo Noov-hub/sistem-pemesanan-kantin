@@ -14,6 +14,11 @@ export default function AdminDashboard() {
     // State Form Create User
     const [newUser, setNewUser] = useState({ username: "", password: "", role: "cashier" });
     const [loading, setLoading] = useState(false);
+    
+    // State Pop Up Edit/Update User
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [currentUsername, setCurrentUsername] = useState(null);
 
     // 1. Cek Login & Ambil Data
     useEffect(() => {
@@ -69,19 +74,20 @@ export default function AdminDashboard() {
         }
     };
 
-    // 5. Fungsi Update Role User
-    const handleUpdateRoleUser = async (id, currentRole) =>{
-        const newRole = prompt("Masukkan role baru (admin/cashier/kitchen): ", currentRole);
+    // 5. Fungsi Update Data User
+    const handleUpdateUser = async (e) =>{
+        e.preventDefault();
         setLoading(true);
-
-        if(newRole && newRole !== currentRole){
-            try{
-                await api.patch(`/admin/update-role/${id}`, { role: newRole });
-                alert("Role berhasil diupdate!");
-                fetchUsers();
-            }catch (error){
-                alert(error.response?.data?.message || "Gagal update role.");
-            }
+        
+        try{
+            await api.patch(`/admin/update/${selectedUser.id}`, { username: selectedUser.username, password: selectedUser.password || "", role: selectedUser.role});
+            alert("Data User berhasil diupdate!");
+            setIsEditOpen(false);
+            fetchUsers();
+        }catch (error){
+            alert(error.response?.data?.message || "Gagal update data user.");
+        }finally{
+            setLoading(false);
         }
     };
 
@@ -190,7 +196,11 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="p-3 text-gray-500">
                                             <button
-                                                onClick={() => handleUpdateRoleUser(u.id, u.role)}
+                                                onClick={() => {
+                                                    setSelectedUser(u);
+                                                    setCurrentUsername(u.username);
+                                                    setIsEditOpen(true);
+                                                }}
                                                 className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs transition">
                                                 Update
                                             </button>
