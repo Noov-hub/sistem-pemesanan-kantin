@@ -71,6 +71,8 @@ exports.deleteUser = async (req, res) => {
         const { id } = req.params;
         
         await db.execute("DELETE FROM users WHERE id = ?", [id]);
+
+        res.status(200).json({ message: "User berhasil dihapus!" });
     }catch(error){
         res.status(500).json({ message: "Server error", error: error.message });
     }

@@ -61,11 +61,11 @@ export default function AdminDashboard() {
     };
 
     // 4. Fungsi Delete User
-    const handleDeleteUser = async (e) => {
+    const handleDeleteUser = async (id) => {
         if(!confirm("Apakah Anda yakin ingin menghapus user ini?")) return;
         setLoading(true);
         try{
-            await api.post(`/admin/delete/${id}`);
+            await api.delete(`/admin/delete/${id}`);
             alert("User berhasil dihapus!");
             fetchUsers();
         }catch(error){
