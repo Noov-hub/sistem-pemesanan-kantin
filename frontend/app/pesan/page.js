@@ -27,7 +27,7 @@ export default function OrderPage() {
       // Cleanup legacy key if exists
       localStorage.removeItem("current_order");
 
-      router.push("/");
+      router.back();
     } catch (error) {
       console.error(error);
       alert("Gagal mengirim pesanan.");
@@ -41,9 +41,9 @@ export default function OrderPage() {
       
       {/* Header Back */}
       <div className="p-4 border-b">
-        <Link href="/" className="text-blue-600 font-medium flex items-center gap-1">
-          ← Kembali ke Monitor
-        </Link>
+        <button onClick={() => router.back()} className="text-blue-600 font-medium flex items-center gap-1 hover:underline">
+          ← Kembali
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col justify-center p-6 max-w-md mx-auto w-full">
