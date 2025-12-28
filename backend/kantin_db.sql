@@ -57,7 +57,7 @@ CREATE TABLE `users`  (
 DROP TABLE IF EXISTS `activity_logs`;
 CREATE TABLE `activity_logs` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NULL DEFAULT NULL,
+  `user_id` int DEFAULT NULL,
   `action` varchar(100) NOT NULL,
   `target_id` int NULL DEFAULT NULL,
   `details` text NULL,
