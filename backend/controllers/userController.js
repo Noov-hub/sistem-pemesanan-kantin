@@ -77,3 +77,20 @@ exports.deleteUser = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 }
+
+// AMBIL DATA SEMUA LOG
+exports.getAllLog = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    
+    const offset = (page - 1) * limit;
+
+    try{
+        const [rows] = await db.query(
+            "SELECT COALESCE(u.username, 'Guest') AS username, COALESCE(u.role, 'N/A') AS role, al.action, al.target_id, al.details, al.created_at FROM activity_logs AS al LEFT JOIN users AS u ON al.user_id = u.id ORDER BY al.created_at DESC LIMIT ? OFFSET ?", [limit, offset]
+        );
+        res.status(200).json({ data: rows });
+    }catch(error){
+        res.status(500).json({ message: "Gagal mengambil data log..." });
+    }
+}

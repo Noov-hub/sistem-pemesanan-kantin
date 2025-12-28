@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes'); // utk admin
 const cron = require('node-cron'); // IMPORT CRON JOB
 const jwt = require('jsonwebtoken'); // [TAMBAHAN: Import JWT untuk cek role]
+const { activityLogger } = require('./middleware/logMiddleware');
 dotenv.config();
 
 // IMPORT LIBRARY KEAMANAN
@@ -86,6 +87,8 @@ app.use((req, res, next) => {
     req.io = io;
     next();
 });
+
+app.use('/api', activityLogger);
 
 // Routes
 app.get('/', (req, res) => {

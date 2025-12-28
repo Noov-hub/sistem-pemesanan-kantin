@@ -2,9 +2,10 @@
 
 import css from "../admin/admin.css";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useEffectEvent } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { socket } from "@/lib/socket";
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -20,6 +21,11 @@ export default function AdminDashboard() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [currentUsername, setCurrentUsername] = useState(null);
 
+    // State Log
+    const [logs, setLogs] = useState([]);
+    const [page, setPage] = useState(1);
+    const limit = 20;
+
     // 1. Cek Login & Ambil Data
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -27,11 +33,27 @@ export default function AdminDashboard() {
 
         if (!token || role !== "admin") {
             router.push("/login");
-        } else {
-            setUsername(localStorage.getItem("username"));
-            fetchUsers();
+            return;
         }
-    }, [router]);
+
+        setUsername(localStorage.getItem("username"));
+        fetchUsers();
+        fetchLogs();
+    }, [router, page]);
+
+    useEffect(() => {
+        const handleNewLog = (newLog) => {
+            console.log("dapet log baru socker: ", newLog);
+            setLogs((prevLogs) => [newLog, ...prevLogs].slice(0, 20));
+        };
+
+        socket.on('new_log', handleNewLog);
+
+        return () => {
+            socket.off('new_log', handleNewLog);
+        }
+
+    }, []);
 
     // 2. Fungsi Ambil User dari Backend
     const fetchUsers = async () => {
@@ -90,6 +112,19 @@ export default function AdminDashboard() {
             setLoading(false);
         }
     };
+
+    // 6. Handler ambil log dari backend
+    const fetchLogs = async () => {
+        setLoading(true);
+        try{
+            const response = await api.get(`/admin/logs?page=${page}&limit=${limit}`);
+            setLogs(response.data.data);
+        }catch (error){
+            console.error("Error catching logs:", error);
+        }finally{
+            setLoading(false);
+        }
+    }
 
     const handleLogout = () => {
         localStorage.clear();
@@ -221,8 +256,76 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
-
             </div>
+            {/* SECTION 3: LIST LOG */}
+            <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Log Aktifitas</h2>
+                
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 text-left text-sm uppercase text-gray-600">
+                                <th className="px-4 py-3 border-b">Waktu</th>
+                                <th className="px-4 py-3 border-b">User</th>
+                                <th className="px-4 py-3 border-b">Aksi</th>
+                                <th className="px-4 py-3 border-b">Target ID</th>
+                                <th className="px-4 py-3 border-b">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-gray-700 text-sm">
+                            {loading ? (
+                                <tr><td colSpan="5" className="text-center py-4">Loading logs...</td></tr>
+                            ) : logs.length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-4">No activity found.</td></tr>
+                            ) : (
+                                logs.map((log, index) => (
+                                    <tr key={index} className="hover:bg-gray-50 border-b">
+                                        <td className="px-4 py-3 whitespace-nowrap">
+                                            {new Date(log.created_at).toLocaleString('id-ID')}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="font-semibold">{log.username}</span>
+                                            <br />
+                                            <span className="text-xs text-gray-500 uppercase">{log.role}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                log.action.includes('DELETE') ? 'bg-red-100 text-red-700' : 
+                                                log.action.includes('CREATE') ? 'bg-green-100 text-green-700' : 
+                                                'bg-blue-100 text-blue-700'
+                                            }`}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">#{log.target_id || '-'}</td>
+                                        <td className="px-4 py-3 italic text-gray-600">{log.details}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center mt-4">
+                    <button 
+                        disabled={page === 1}
+                        onClick={() => setPage(p => p - 1)}
+                        className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium">Page {page}</span>
+                    <button 
+                        disabled={logs.length < limit}
+                        onClick={() => setPage(p => p + 1)}
+                        className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+            {/* POPUP EDIT USER */}
             {isEditOpen && (
                 <div className="rounded-md p-4m">
                     <div className="popUp p-6 rounded-xl shadow-2xl w-1/2 max-w-md border-2">
