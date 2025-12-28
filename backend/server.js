@@ -17,12 +17,13 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1)
 const server = http.createServer(app);
 
 // Setup Socket.io dengan CORS
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000", // Alamat Frontend
+        origin: process.env.FRONTEND_URL || "http://localhost:3000", // Alamat Frontend
         methods: ["GET", "POST", "PUT", "DELETE"]
     }
 });
