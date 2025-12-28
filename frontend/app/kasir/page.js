@@ -15,6 +15,8 @@ export default function KasirDashboard() {
   // State untuk Mode Edit (Menyimpan ID pesanan yang sedang diedit)
   const [editingId, setEditingId] = useState(null); 
   const [tempStatus, setTempStatus] = useState(""); 
+  const [tempName, setTempName] = useState("");   // State Nama Sementara
+  const [tempNotes, setTempNotes] = useState(""); // State Catatan Sementara
 
   const [searchQuery, setSearchQuery] = useState(""); // State Pencarian
 
@@ -198,31 +200,70 @@ export default function KasirDashboard() {
                 {/* --- LOGIKA TAMPILAN: EDIT MODE vs NORMAL MODE --- */}
                 {editingId === order.id ? (
                     // TAMPILAN EDIT (DROPDOWN)
-                    <div className="animate-fade-in">
-                        <h3 className="font-bold text-gray-800 mb-2">Ubah Status Manual:</h3>
-                        <select 
-                            className="w-full p-2 border rounded mb-3 text-black"
-                            value={tempStatus}
-                            onChange={(e) => setTempStatus(e.target.value)}
-                        >
-                            {statusOptions.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => setEditingId(null)}
-                                className="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-xs font-bold"
-                            >
-                                BATAL
-                            </button>
-                            <button 
-                                onClick={() => updateStatus(order.id, tempStatus)}
-                                className="flex-1 bg-blue-600 text-white py-2 rounded text-xs font-bold"
-                            >
-                                SIMPAN
-                            </button>
-                        </div>
+                    <div className="animate-fade-in bg-blue-50 -m-5 p-5 rounded-xl border border-blue-200">
+                      <h3 className="font-bold text-blue-800 mb-3 text-sm">📝 Edit Data Pesanan</h3>
+
+                      {/* 1. Input Nama */}
+                      <div className="mb-2">
+                          <label className="text-xs font-bold text-gray-500">Nama Pelanggan</label>
+                          <input 
+                              type="text"
+                              className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 text-black"
+                              value={tempName}
+                              onChange={(e) => setTempName(e.target.value)}
+                          />
+                      </div>
+
+                      {/* 2. Input Catatan */}
+                      <div className="mb-2">
+                          <label className="text-xs font-bold text-gray-500">Catatan / Menu</label>
+                          <textarea 
+                              rows="3"
+                              className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 text-black"
+                              value={tempNotes}
+                              onChange={(e) => setTempNotes(e.target.value)}
+                          />
+                      </div>
+
+                      {/* 3. Dropdown Status */}
+                      <div className="mb-4">
+                          <label className="text-xs font-bold text-gray-500">Status Pesanan</label>
+                          <select 
+                              className="w-full p-2 border rounded text-sm font-bold text-black"
+                              value={tempStatus}
+                              onChange={(e) => setTempStatus(e.target.value)}
+                          >
+                              {statusOptions.map(opt => (
+                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                          </select>
+                      </div>
+
+                      {/* Tombol Simpan & Batal */}
+                      <div className="flex gap-2 mt-2">
+                          <button 
+                              onClick={() => setEditingId(null)}
+                              className="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded text-xs font-bold hover:bg-gray-50"
+                          >
+                              BATAL
+                          </button>
+                          <button 
+                              onClick={() => {
+                                  // Panggil API update dengan data lengkap
+                                  api.put(`/orders/${order.id}`, { 
+                                      status: tempStatus,
+                                      customer_name: tempName,
+                                      order_notes: tempNotes
+                                  }).then(() => {
+                                      setEditingId(null);
+                                      // fetchOrders akan otomatis jalan karena ada socket listener
+                                  }).catch(() => alert("Gagal update data"));
+                              }}
+                              className="flex-1 bg-blue-600 text-white py-2 rounded text-xs font-bold hover:bg-blue-700 shadow-sm"
+                          >
+                              SIMPAN PERUBAHAN
+                          </button>
+                      </div>
                     </div>
                 ) : (
                     // TAMPILAN NORMAL (KARTU BIASA)
@@ -235,9 +276,11 @@ export default function KasirDashboard() {
                                 onClick={() => {
                                     setEditingId(order.id);
                                     setTempStatus(order.status);
+                                    setTempName(order.customer_name); // Isi nama saat ini
+                                    setTempNotes(order.order_notes);  // Isi notes saat ini
                                 }}
-                                className="text-gray-400 hover:text-blue-600"
-                                title="Edit Status Manual"
+                                className="text-gray-400 hover:text-blue-600 p-1"
+                                title="Edit Pesanan"
                             >
                                 ✏️
                             </button>
