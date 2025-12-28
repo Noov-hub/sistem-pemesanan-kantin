@@ -1,40 +1,32 @@
 "use client";
 
-// --- IMPORTS ---
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/axios"; // Menggunakan konfigurasi Axios yang sudah ada
+import api from "@/lib/axios";
 import Link from "next/link";
 
 export default function LoginPage() {
-  // --- STATE & HOOKS ---
   const router = useRouter();
-  
-  // State untuk menyimpan data inputan user (Username & Password)
   const [form, setForm] = useState({ username: "", password: "" });
-  
-  // State untuk menangani Error dan Loading (agar tombol tidak bisa diklik 2x)
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --- FUNGSI LOGIN (LOGIKA UTAMA) ---
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Mencegah reload halaman saat form disubmit
-    setError("");       // Reset pesan error lama
-    setLoading(true);   // Aktifkan status loading
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-
-      // 1. Kirim data (username & password) ke Backend
+      // 1. Kirim data ke Backend
       const res = await api.post("/users/login", form);
       const { token, role, username } = res.data;
 
-      // 2. Simpan "Kunci" (Token) di LocalStorage Browser agar sesi tersimpan
+      // 2. Simpan "Kunci" (Token) di LocalStorage Browser
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("username", username);
 
-      // 3. Redirect (Pindah Halaman) sesuai Role (Jabatan)
+      // 3. Redirect sesuai Role (Jabatan)
       if (role === "cashier") {
         router.push("/kasir");
       } else if (role === "kitchen") {
@@ -42,104 +34,74 @@ export default function LoginPage() {
       } else if (role === "admin") {
         router.push("/admin");
       } else {
-        router.push("/"); // Default ke halaman monitor jika role tidak dikenal
+        router.push("/");
       }
-      // ============================================================
 
     } catch (err) {
       console.error(err);
-      // Tampilkan pesan error dari backend atau pesan default
       setError(err.response?.data?.message || "Login Gagal. Cek username/password.");
     } finally {
-      // Matikan status loading, baik sukses maupun gagal
       setLoading(false);
     }
   };
 
-  // --- TAMPILAN (UI DARI FIGMA) ---
-return (
-  // Wrapper utama: bikin halaman full layar & center konten
-  <main className="w-full h-full flex items-center justify-center px-4 text-white">
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-gray-100">
+        
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-800">Login Staff</h1>
+          <p className="text-sm text-gray-500">Masuk untuk mengelola pesanan</p>
+        </div>
 
-    {/* Container utama card login */}
-    <div className="w-full max-w-[520px] text-center">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm text-center border border-red-100 font-medium">
+            ⚠️ {error}
+          </div>
+        )}
 
-      {/* ================= LOGO & TITLE ================= */}
-      <div className="mb-10">
-        {/* Nama brand atas */}
-        <h1 className="tracking-[0.45em] font-bold text-[26px]">
-          J I C A
-        </h1>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Username</label>
+            <input
+              type="text"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition text-black"
+              placeholder="Contoh: kasir"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+            />
+          </div>
 
-        {/* Subtitle brand */}
-        <h2 className="tracking-[0.35em] font-bold text-[22px] mt-2">
-          C A F E T E R I A
-        </h2>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition text-black"
+              placeholder="••••••"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </div>
 
-        {/* Garis pemisah bawah logo */}
-        <div className="h-[4px] bg-white mt-3" />
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg text-white font-bold text-lg shadow-md transition-all ${
+              loading 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+            }`}
+          >
+            {loading ? "Memproses..." : "MASUK"}
+          </button>
+        </form>
+
+        <div className="mt-8 text-center">
+          <Link href="/" className="text-sm text-gray-400 hover:text-blue-600 transition">
+            ← Kembali ke Monitor
+          </Link>
+        </div>
       </div>
-
-      {/* ================= JUDUL FORM ================= */}
-      <h3 className="text-5xl font-bold mb-4">
-        Login Staff
-      </h3>
-
-      {/* Deskripsi kecil */}
-      <p className="text-gray-300 mb-8">
-        Masuk untuk mengelola pesanan
-      </p>
-
-      {/* ================= ERROR MESSAGE ================= */}
-      {/* Muncul hanya kalau error tidak kosong */}
-      {error && (
-        <p className="bg-red-500/70 py-2 rounded mb-4">
-          {error}
-        </p>
-      )}
-
-      {/* ================= FORM LOGIN ================= */}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-
-        {/* Input Username */}
-        <input
-          type="text"
-          placeholder="Username"
-          className="rounded-md px-4 py-3 text-black"
-          onChange={(e) =>
-            setForm({ ...form, username: e.target.value })
-          }
-        />
-
-        {/* Input Password */}
-        <input
-          type="password"
-          placeholder="Password"
-          className="rounded-md px-4 py-3 text-black"
-          onChange={(e) =>
-            setForm({ ...form, password: e.target.value })
-          }
-        />
-
-        {/* Tombol Submit */}
-        <button
-          disabled={loading} // Disable kalau sedang request login
-          className="bg-[#8F6633] py-4 rounded-xl text-2xl font-bold hover:bg-[#7a552b]"
-        >
-          {/* Teks berubah saat loading */}
-          {loading ? "Memproses..." : "Masuk"}
-        </button>
-      </form>
-
-      {/* ================= LINK KEMBALI ================= */}
-      <Link
-        href="/"
-        className="block mt-6 text-gray-300 hover:text-white"
-      >
-        ← Kembali ke monitor
-      </Link>
-
     </div>
-  </main>
-);
+  );
 }
