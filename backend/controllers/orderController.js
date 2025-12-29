@@ -90,6 +90,20 @@ exports.getNewOrders = async (req, res) => {
     }
 };
 
+// --- NEW PART: GET READY ORDERS (Siap Saji) ---
+exports.getReadyOrders = async (req, res) => {
+    try {
+        const [rows] = await db.execute(`
+            SELECT * FROM orders 
+            WHERE status = 'ready' 
+            ORDER BY updated_at ASC
+        `);
+        res.status(200).json({ data: rows });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
 // --- 5. GET HISTORY (Arsip) ---
 // Mengambil yang sudah selesai atau dibatalkan.
 exports.getFinishedOrders = async (req, res) => {
