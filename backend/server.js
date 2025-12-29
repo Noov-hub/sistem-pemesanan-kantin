@@ -1,8 +1,10 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const db = require('./config/db'); // Import koneksi DB
 const orderRoutes = require('./routes/orderRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -10,7 +12,6 @@ const adminRoutes = require('./routes/adminRoutes'); // utk admin
 const cron = require('node-cron'); // IMPORT CRON JOB
 const jwt = require('jsonwebtoken'); // [TAMBAHAN: Import JWT untuk cek role]
 const { activityLogger } = require('./middleware/logMiddleware');
-dotenv.config();
 
 // IMPORT LIBRARY KEAMANAN
 const helmet = require('helmet');
