@@ -45,9 +45,27 @@ export default function DapurDashboard() {
         const audio = new Audio('/notif.mp3');
         audio.play().catch(() => {});
     };
-    socket.on("status_updated", ({ status }) => {
-      if (status === 'confirmed') playSound();
-      fetchKitchenOrders();
+    socket.on("status_updated", (updatedOrder) => {
+        // 1. Mainkan suara jika status jadi confirmed (Pesanan Baru Masuk Antrian)
+        if (updatedOrder.status === 'confirmed') playSound();
+
+        // 2. Update State Lokal (Optimistic UI)
+        // Kita update nama/notes langsung di kartu yang sedang tampil tanpa fetch ulang
+        setOrders(prevOrders => prevOrders.map(order => {
+            if (order.id === updatedOrder.id) {
+                return {
+                    ...order,
+                    // Timpa data lama dengan data baru dari socket (jika ada)
+                    status: updatedOrder.status || order.status,
+                    customer_name: updatedOrder.customer_name || order.customer_name,
+                    order_notes: updatedOrder.order_notes || order.order_notes
+                };
+            }
+            return order;
+        }));
+
+        // 3. (Opsional) Tetap panggil fetch untuk memastikan sinkronisasi data 100%
+        fetchKitchenOrders(); 
     });
     socket.on("order_deleted", () => fetchKitchenOrders());
     socket.on("new_order", () => fetchKitchenOrders()); // Jika ada yg baru masuk antrian

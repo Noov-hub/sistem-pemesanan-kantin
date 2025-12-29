@@ -98,15 +98,29 @@ useEffect(() => {
     });
 
     // Saat ada status berubah (misal: new -> confirmed, atau cooking -> ready)
-    socket.on("status_updated", ({ id, status }) => {
-        // Cek apakah pesanan ini milik user (ada di localStorage)
+    socket.on("status_updated", (payload) => {
+        const { id, status, customer_name, order_notes } = payload;
+
+        // Cek milik user untuk notifikasi suara
         const myOrdersLocal = JSON.parse(localStorage.getItem("my_orders") || "[]");
         const isMyOrder = myOrdersLocal.some(order => order.id === id);
-
         if (status === 'ready' && isMyOrder) playSound();
         
+        // Update Queue dengan Data Lengkap
         setQueue((prev) => 
-            prev.map((item) => item.id === id ? { ...item, status } : item)
+            prev.map((item) => {
+                if (item.id === id) {
+                    return { 
+                        ...item, 
+                        // Update status jika ada di payload, jika tidak pakai yang lama
+                        status: status || item.status, 
+                        // Update nama & notes jika diedit kasir
+                        customer_name: customer_name || item.customer_name,
+                        order_notes: order_notes || item.order_notes
+                    };
+                }
+                return item;
+            })
         );
     });
     // Saat ada status karena clean-up
