@@ -9,7 +9,13 @@ router.get('/users', verifyToken, verifyAdmin, userController.getAllUser);
 // post handler untuk create user
 router.post('/create', verifyToken, verifyAdmin, userController.createUser);
 
-// patch handler untuk role user
-router.patch('/update-role/:id', verifyToken, verifyAdmin, userController.updateRoleUser);
+// patch handler untuk data user
+router.patch('/update/:id', verifyToken, verifyAdmin, userController.updateUser);
+
+// delete handler untuk delete user
+router.delete('/delete/:id', verifyToken, verifyAdmin, userController.deleteUser);
+
+// get handler untuk mengambil semua log
+router.get('/logs', verifyToken, verifyAdmin, userController.getAllLog);
 
 module.exports = router;

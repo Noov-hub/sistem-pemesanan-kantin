@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import css from "../admin/admin.css";
+
+import { useState, useEffect, useEffectEvent } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
+import { socket } from "@/lib/socket";
 
 export default function AdminDashboard() {
     const router = useRouter();
@@ -12,6 +15,16 @@ export default function AdminDashboard() {
     // State Form Create User
     const [newUser, setNewUser] = useState({ username: "", password: "", role: "cashier" });
     const [loading, setLoading] = useState(false);
+    
+    // State Pop Up Edit/Update User
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [currentUsername, setCurrentUsername] = useState(null);
+
+    // State Log
+    const [logs, setLogs] = useState([]);
+    const [page, setPage] = useState(1);
+    const limit = 20;
 
     // 1. Cek Login & Ambil Data
     useEffect(() => {
@@ -20,11 +33,27 @@ export default function AdminDashboard() {
 
         if (!token || role !== "admin") {
             router.push("/login");
-        } else {
-            setUsername(localStorage.getItem("username"));
-            fetchUsers();
+            return;
         }
-    }, [router]);
+
+        setUsername(localStorage.getItem("username"));
+        fetchUsers();
+        fetchLogs();
+    }, [router, page]);
+
+    useEffect(() => {
+        const handleNewLog = (newLog) => {
+            console.log("dapet log baru socker: ", newLog);
+            setLogs((prevLogs) => [newLog, ...prevLogs].slice(0, 20));
+        };
+
+        socket.on('new_log', handleNewLog);
+
+        return () => {
+            socket.off('new_log', handleNewLog);
+        }
+
+    }, []);
 
     // 2. Fungsi Ambil User dari Backend
     const fetchUsers = async () => {
@@ -52,6 +81,50 @@ export default function AdminDashboard() {
             setLoading(false);
         }
     };
+
+    // 4. Fungsi Delete User
+    const handleDeleteUser = async (id) => {
+        if(!confirm("Apakah Anda yakin ingin menghapus user ini?")) return;
+        setLoading(true);
+        try{
+            await api.delete(`/admin/delete/${id}`);
+            alert("User berhasil dihapus!");
+            fetchUsers();
+        }catch(error){
+            console.error(error);
+            alert(error.response?.data?.message || "Gagal menghapus user");
+        }
+    };
+
+    // 5. Fungsi Update Data User
+    const handleUpdateUser = async (e) =>{
+        e.preventDefault();
+        setLoading(true);
+        
+        try{
+            await api.patch(`/admin/update/${selectedUser.id}`, { username: selectedUser.username, password: selectedUser.password || "", role: selectedUser.role});
+            alert("Data User berhasil diupdate!");
+            setIsEditOpen(false);
+            fetchUsers();
+        }catch (error){
+            alert(error.response?.data?.message || "Gagal update data user.");
+        }finally{
+            setLoading(false);
+        }
+    };
+
+    // 6. Handler ambil log dari backend
+    const fetchLogs = async () => {
+        setLoading(true);
+        try{
+            const response = await api.get(`/admin/logs?page=${page}&limit=${limit}`);
+            setLogs(response.data.data);
+        }catch (error){
+            console.error("Error catching logs:", error);
+        }finally{
+            setLoading(false);
+        }
+    }
 
     const handleLogout = () => {
         localStorage.clear();
@@ -136,6 +209,7 @@ export default function AdminDashboard() {
                                     <th className="p-3 border-b">Username</th>
                                     <th className="p-3 border-b">Role</th>
                                     <th className="p-3 border-b">Dibuat Pada</th>
+                                    <th className="p-3 border-b">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="text-gray-700 text-sm">
@@ -155,6 +229,22 @@ export default function AdminDashboard() {
                                         <td className="p-3 text-gray-500">
                                             {new Date(u.created_at).toLocaleDateString()}
                                         </td>
+                                        <td className="p-3 text-gray-500">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedUser(u);
+                                                    setCurrentUsername(u.username);
+                                                    setIsEditOpen(true);
+                                                }}
+                                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs transition">
+                                                Update
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteUser(u.id)}
+                                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition">
+                                                Delete
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                                 {users.length === 0 && (
@@ -166,8 +256,133 @@ export default function AdminDashboard() {
                         </table>
                     </div>
                 </div>
-
             </div>
+            {/* SECTION 3: LIST LOG */}
+            <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Log Aktifitas</h2>
+                
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 text-left text-sm uppercase text-gray-600">
+                                <th className="px-4 py-3 border-b">Waktu</th>
+                                <th className="px-4 py-3 border-b">User</th>
+                                <th className="px-4 py-3 border-b">Aksi</th>
+                                <th className="px-4 py-3 border-b">Target ID</th>
+                                <th className="px-4 py-3 border-b">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-gray-700 text-sm">
+                            {loading ? (
+                                <tr><td colSpan="5" className="text-center py-4">Loading logs...</td></tr>
+                            ) : logs.length === 0 ? (
+                                <tr><td colSpan="5" className="text-center py-4">No activity found.</td></tr>
+                            ) : (
+                                logs.map((log, index) => (
+                                    <tr key={index} className="hover:bg-gray-50 border-b">
+                                        <td className="px-4 py-3 whitespace-nowrap">
+                                            {new Date(log.created_at).toLocaleString('id-ID')}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="font-semibold">{log.username}</span>
+                                            <br />
+                                            <span className="text-xs text-gray-500 uppercase">{log.role}</span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                log.action.includes('DELETE') ? 'bg-red-100 text-red-700' : 
+                                                log.action.includes('CREATE') ? 'bg-green-100 text-green-700' : 
+                                                'bg-blue-100 text-blue-700'
+                                            }`}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">#{log.target_id || '-'}</td>
+                                        <td className="px-4 py-3 italic text-gray-600">{log.details}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-between items-center mt-4">
+                    <button 
+                        disabled={page === 1}
+                        onClick={() => setPage(p => p - 1)}
+                        className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-medium">Page {page}</span>
+                    <button 
+                        disabled={logs.length < limit}
+                        onClick={() => setPage(p => p + 1)}
+                        className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+            {/* POPUP EDIT USER */}
+            {isEditOpen && (
+                <div className="rounded-md p-4m">
+                    <div className="popUp p-6 rounded-xl shadow-2xl w-1/2 max-w-md border-2">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Edit User Role</h2>
+                        <p className="mb-4 text-sm text-gray-600">Editing: <span className="font-bold">{currentUsername}</span></p>
+                        
+                        <form onSubmit={handleUpdateUser} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Username</label>
+                                <input 
+                                type="text"
+                                required
+                                className="w-1/2 p-2 border rounded mt-1 bg-gray-50 text-black"
+                                value={selectedUser.username}
+                                onChange={(e) => setSelectedUser({...selectedUser, username: e.target.value})} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Password</label>
+                                <input 
+                                type="text"
+                                className="w-1/2"
+                                placeholder="Masukkan password baru"
+                                onChange={(e) => setSelectedUser({...selectedUser, password: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700">Role</label>
+                                <select 
+                                    className="w-full p-2 border rounded mt-1 bg-gray-50 text-black"
+                                    value={selectedUser.role}
+                                    onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value})}
+                                >
+                                    <option value="cashier">Cashier</option>
+                                    <option value="kitchen">Kitchen</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsEditOpen(false)} 
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 rounded transition"
+                                >
+                                    CANCEL
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition"
+                                >
+                                    {loading ? "Saving..." : "SAVE CHANGES"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

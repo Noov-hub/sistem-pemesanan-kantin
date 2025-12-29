@@ -9,7 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes'); // utk admin
 const cron = require('node-cron'); // IMPORT CRON JOB
 const jwt = require('jsonwebtoken'); // [TAMBAHAN: Import JWT untuk cek role]
-
+const { activityLogger } = require('./middleware/logMiddleware');
 dotenv.config();
 
 // IMPORT LIBRARY KEAMANAN
@@ -17,7 +17,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', 1)
 const server = http.createServer(app);
 
 // Setup Socket.io dengan CORS
@@ -88,6 +88,8 @@ app.use((req, res, next) => {
     req.io = io;
     next();
 });
+
+app.use('/api', activityLogger);
 
 // Routes
 app.get('/', (req, res) => {
