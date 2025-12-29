@@ -31,6 +31,11 @@ export default function DapurDashboard() {
       setLoading(false);
     } catch (error) {
       console.error("Gagal ambil data dapur:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert("Sesi telah berakhir, silakan login kembali.");
+          localStorage.clear();
+          router.push("/login");
+      }
     }
   };
 
@@ -70,7 +75,14 @@ export default function DapurDashboard() {
       await api.put(`/orders/${id}`, { status: newStatus });
       await fetchKitchenOrders();
     } catch (error) {
-      alert("Gagal update status");
+      console.error("Gagal update status:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert("Sesi telah berakhir, silakan login kembali.");
+          localStorage.clear();
+          router.push("/login");
+      } else {
+          alert("Gagal update status");
+      }
     } finally {
       setLoading(false);
     }
