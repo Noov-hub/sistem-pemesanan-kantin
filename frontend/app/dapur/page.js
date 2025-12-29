@@ -36,14 +36,21 @@ export default function DapurDashboard() {
 
   useEffect(() => {
     socket.connect();
-    socket.on("status_updated", () => fetchKitchenOrders());
+    const playSound = () => {
+        const audio = new Audio('/notif.mp3');
+        audio.play().catch(() => {});
+    };
+    socket.on("status_updated", ({ status }) => {
+      if (status === 'confirmed') playSound();
+      fetchKitchenOrders();
+    });
     socket.on("order_deleted", () => fetchKitchenOrders());
     socket.on("new_order", () => fetchKitchenOrders()); // Jika ada yg baru masuk antrian
     
     return () => {
-        socket.off("status_updated");
-        socket.off("order_deleted");
-        socket.off("new_order");
+      socket.off("status_updated");
+      socket.off("order_deleted");
+      socket.off("new_order");
     };
   }, []);
 
