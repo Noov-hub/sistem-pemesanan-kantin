@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     // baseURL: 'http://localhost:5000/api',
-    baseURL: 'https://reality-consolidated-dairy-basic.trycloudflare.com/api', // ubah dengan url backend dari trycloudflare, JANGAN LUPA UBAH SETIAP RESTART TRYCLOUDFLARE
+    baseURL: process.env.NEXT_PUBLIC_API_URL + '/api', // ubah dengan url backend dari trycloudflare, JANGAN LUPA UBAH SETIAP RESTART TRYCLOUDFLARE
     headers: {
         'Content-Type': 'application/json',
     },
