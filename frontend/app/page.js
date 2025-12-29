@@ -68,7 +68,10 @@ useEffect(() => {
 
     // 2. Nyalakan Socket.io
     socket.connect();
-
+    const playSound = () => {
+        const audio = new Audio('/notif.mp3');
+        audio.play().catch(() => {});
+    };
     // 3. Pasang "Telinga" (Listener)
     // Saat ada pesanan baru masuk...
     socket.on("new_order", (newOrder) => {
@@ -78,6 +81,7 @@ useEffect(() => {
 
     // Saat ada status berubah (misal: new -> confirmed, atau cooking -> ready)
     socket.on("status_updated", ({ id, status }) => {
+        if (status === 'ready') playSound();
         setQueue((prev) => 
             prev.map((item) => item.id === id ? { ...item, status } : item)
         );
