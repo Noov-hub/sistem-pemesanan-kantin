@@ -81,7 +81,12 @@ useEffect(() => {
 
     // Saat ada status berubah (misal: new -> confirmed, atau cooking -> ready)
     socket.on("status_updated", ({ id, status }) => {
-        if (status === 'ready') playSound();
+        // Cek apakah pesanan ini milik user (ada di localStorage)
+        const myOrdersLocal = JSON.parse(localStorage.getItem("my_orders") || "[]");
+        const isMyOrder = myOrdersLocal.some(order => order.id === id);
+
+        if (status === 'ready' && isMyOrder) playSound();
+        
         setQueue((prev) => 
             prev.map((item) => item.id === id ? { ...item, status } : item)
         );
