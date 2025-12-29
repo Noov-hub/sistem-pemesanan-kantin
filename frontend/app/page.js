@@ -36,18 +36,36 @@ export default function MonitorPage() {
   };
 
   // Filter My Orders based on Queue
-  // Hanya tampilkan jika ada di queue (artinya status masih active) DAN statusnya 'new'
-  const activeMyOrders = myOrders.filter(localOrder => {
-      const matchInQueue = queue.find(q => q.id === localOrder.id);
-      return matchInQueue && (matchInQueue.status === 'new' || matchInQueue.status === 'confirmed' || matchInQueue.status === 'cooking' || matchInQueue.status === 'ready' || matchInQueue.status === 'completed');
-  }).map(localOrder => {
-      // Map ke data terbaru dari queue (untuk timer created_at yg akurat dari server)
+  // Tampilkan semua pesanan user yang belum 'cancelled' atau 'completed'
+  const activeMyOrders = myOrders.map(localOrder => {
       return queue.find(q => q.id === localOrder.id);
+  }).filter(order => {
+      if (!order) return false;
+      return !['cancelled', 'completed'].includes(order.status);
   });
 
-  // Update local storage jika ada perubahan (opsional, tapi bagus buat sync)
-  // Tapi requirement bilang: "jika sudah confirmed atau cancelled maka akan hilang dari card"
-  // Jadi logic filter di atas sudah cukup untuk display.
+  // Sync Local Storage: Hapus pesanan yang sudah completed/cancelled dari LocalStorage
+  useEffect(() => {
+      if (queue.length === 0) return;
+
+      const currentMyOrders = JSON.parse(localStorage.getItem("my_orders") || "[]");
+      let hasChanges = false;
+      
+      const newMyOrders = currentMyOrders.filter(localOrder => {
+          const match = queue.find(q => q.id === localOrder.id);
+          // Jika ada di queue dan statusnya cancelled/completed, hapus dari my_orders LS
+          if (match && ['cancelled', 'completed'].includes(match.status)) {
+              hasChanges = true;
+              return false;
+          }
+          return true;
+      });
+
+      if (hasChanges) {
+           localStorage.setItem("my_orders", JSON.stringify(newMyOrders));
+           setMyOrders(newMyOrders);
+      }
+  }, [queue]);
 
 
   // Fungsi ambil data antrian publik
@@ -213,14 +231,16 @@ useEffect(() => {
                                         <div className="font-bold text-gray-800">{order.customer_name}</div>
                                         <div className="text-xs text-gray-500 font-mono">#{order.id}</div>
                                     </div>
-                                    <div className={`px-2 py-1 rounded text-xs font-bold ${isExpired ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                                        {isExpired ? "BATAL" : timeLeft}
+                                    <div className={`px-2 py-1 rounded text-xs font-bold ${isExpired && order.status === 'new' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                                        {isExpired && order.status === 'new' ? "BATAL" : (
+                                            order.status === 'new' ? timeLeft : order.status
+                                        )}
                                     </div>
                                 </div>
                                 <div className="mt-2 text-sm text-gray-600 border-t border-gray-200 pt-1">
                                     {order.order_notes}
                                 </div>
-                                {isExpired && <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center text-red-600 font-black rotate-12">EXPIRED</div>}
+                                {isExpired && order.status === 'new' && <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center text-red-600 font-black rotate-12">EXPIRED</div>}
                             </div>
                         )
                     })}
