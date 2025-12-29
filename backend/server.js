@@ -149,8 +149,8 @@ cron.schedule('0 3 * * *', async () => {
         const RETENTION_DAYS_COMPLETED = parseInt(process.env.DATA_RETENTION_DAYS_COMPLETED) || 365; 
 
         console.log(`🧹 Running Daily Cleanup...`);
-        console.log(`   - Cancelled > ${RETENTION_CANCELLED} days`);
-        console.log(`   - Completed > ${RETENTION_COMPLETED} days`);
+        console.log(`   - Cancelled > ${RETENTION_DAYS_CANCELLED} days`);
+        console.log(`   - Completed > ${RETENTION_DAYS_COMPLETED} days`);
 
         // HAPUS HANYA YANG CANCELLED (Sampah Murni)
         // Kita biarkan yang 'completed' tetap ada untuk laporan keuangan
