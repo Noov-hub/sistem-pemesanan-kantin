@@ -24,7 +24,10 @@ const server = http.createServer(app);
 // Setup Socket.io dengan CORS
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:3000", // Alamat Frontend
+        // origin: process.env.FRONTEND_URL || "http://localhost:3000", // Alamat Frontend
+        // HANYA UNTUK TESTING, JANGAN DIUBAH DI PRODUCTION
+        origin: '*',
+        credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE"]
     }
 });
@@ -45,7 +48,7 @@ io.on('connection', (socket) => {
 // --- RATE LIMITER CERDAS ---
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 Menit
-    max: 100, // Maks limit untuk Guest/Customer
+    max: 1000, // Maks limit untuk Guest/Customer
     standardHeaders: true,
     legacyHeaders: false,
     message: "Terlalu banyak request.",
