@@ -124,35 +124,63 @@ exports.getPublicQueue = async (req, res) => {
     }
 };
 
-// 3. UPDATE: Ganti Status (Jantung Operasional)
+// 3. UPDATE: Ganti Status & Edit Isi Pesanan
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        // Ambil juga customer_name dan order_notes dari body
+        const { status, customer_name, order_notes } = req.body; 
+        
         const validStatuses = ['new', 'confirmed', 'cooking', 'ready', 'completed', 'cancelled'];
-        if (!validStatuses.includes(status)) {
+        if (status && !validStatuses.includes(status)) {
             return res.status(400).json({ message: "Status tidak valid!" });
         }
 
-        // LOGIKA CERDAS: Pilih kolom timestamp berdasarkan status
-        let query = "UPDATE orders SET status = ?, updated_at = NOW()";
-        
-        if (status === 'new') {
-            query += ", confirmed_at = NULL";
-        }else if (status === 'cooking') {
-            query += ", cooking_at = NOW()";
-        } else if (status === 'ready') {
-            query += ", ready_at = NOW()";
+        // --- DYNAMIC QUERY BUILDER ---
+        // Kita bangun query SQL secara dinamis tergantung data apa yang dikirim
+        let fields = [];
+        let values = [];
+
+        // 1. Cek Status (Wajib ada logic timestamp)
+        if (status) {
+            fields.push("status = ?");
+            values.push(status);
+
+            if (status === 'new') fields.push("confirmed_at = NULL"); // Reset waktu konfirmasi jika ada pesanan yang tidak sengaja terkonfirmasi
+            else if (status === 'cooking') fields.push("cooking_at = NOW()");
+            else if (status === 'ready') fields.push("ready_at = NOW()");
         }
-        // Note: 'confirmed' sengaja tidak ada di sini agar confirmed_at tidak berubah saat edit manual
-        
-        query += " WHERE id = ?";
 
-        await db.execute(query, [status, id]);
+        // 2. Cek Nama Customer (Opsional)
+        if (customer_name !== undefined) {
+            fields.push("customer_name = ?");
+            values.push(customer_name);
+        }
 
-        req.io.emit('status_updated', { id: parseInt(id), status });
+        // 3. Cek Catatan Pesanan (Opsional)
+        if (order_notes !== undefined) {
+            fields.push("order_notes = ?");
+            values.push(order_notes);
+        }
 
-        res.status(200).json({ message: `Status updated to ${status}` });
+        // Selalu update 'updated_at'
+        fields.push("updated_at = NOW()");
+
+        // Gabungkan semua field menjadi string query
+        const query = `UPDATE orders SET ${fields.join(", ")} WHERE id = ?`;
+        values.push(id); // Masukkan ID di parameter terakhir
+
+        await db.execute(query, values);
+
+        // Emit notifikasi socket dengan data lengkap agar layar dapur/kasir langsung berubah
+        req.io.emit('status_updated', { 
+            id: parseInt(id), 
+            status, 
+            customer_name, 
+            order_notes 
+        });
+
+        res.status(200).json({ message: "Data pesanan berhasil diperbarui" });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }

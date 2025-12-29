@@ -31,19 +31,31 @@ export default function DapurDashboard() {
       setLoading(false);
     } catch (error) {
       console.error("Gagal ambil data dapur:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert("Sesi telah berakhir, silakan login kembali.");
+          localStorage.clear();
+          router.push("/login");
+      }
     }
   };
 
   useEffect(() => {
     socket.connect();
-    socket.on("status_updated", () => fetchKitchenOrders());
+    const playSound = () => {
+        const audio = new Audio('/notif.mp3');
+        audio.play().catch(() => {});
+    };
+    socket.on("status_updated", ({ status }) => {
+      if (status === 'confirmed') playSound();
+      fetchKitchenOrders();
+    });
     socket.on("order_deleted", () => fetchKitchenOrders());
     socket.on("new_order", () => fetchKitchenOrders()); // Jika ada yg baru masuk antrian
     
     return () => {
-        socket.off("status_updated");
-        socket.off("order_deleted");
-        socket.off("new_order");
+      socket.off("status_updated");
+      socket.off("order_deleted");
+      socket.off("new_order");
     };
   }, []);
 
@@ -63,7 +75,14 @@ export default function DapurDashboard() {
       await api.put(`/orders/${id}`, { status: newStatus });
       await fetchKitchenOrders();
     } catch (error) {
-      alert("Gagal update status");
+      console.error("Gagal update status:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert("Sesi telah berakhir, silakan login kembali.");
+          localStorage.clear();
+          router.push("/login");
+      } else {
+          alert("Gagal update status");
+      }
     } finally {
       setLoading(false);
     }
