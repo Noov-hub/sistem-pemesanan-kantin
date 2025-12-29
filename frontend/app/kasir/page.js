@@ -37,8 +37,8 @@ export default function KasirDashboard() {
       let endpoint = "/orders/active"; 
       if (activeTab === "new") endpoint = "/orders/new";
       else if (activeTab === "active") endpoint = "/orders/active";
-      else if (activeTab === "kitchen") endpoint = "/orders/kitchen";
       else if (activeTab === "ready") endpoint = "/orders/ready";
+      else if (activeTab === "kitchen") endpoint = "/orders/kitchen";
       else if (activeTab === "history") endpoint = "/orders/history";
 
       const res = await api.get(endpoint);
@@ -167,8 +167,8 @@ export default function KasirDashboard() {
             {[
                 { id: "new", label: "Baru Masuk" },
                 { id: "active", label: "Semua Aktif" },
-                { id: "kitchen", label: "Monitor Dapur" },
                 { id: "ready", label: "Siap Saji" },
+                { id: "kitchen", label: "Monitor Dapur" },
                 { id: "history", label: "Riwayat" }
             ].map((tab) => (
                 <button
