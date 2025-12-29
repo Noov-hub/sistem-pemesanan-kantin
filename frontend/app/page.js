@@ -39,7 +39,7 @@ export default function MonitorPage() {
   // Hanya tampilkan jika ada di queue (artinya status masih active) DAN statusnya 'new'
   const activeMyOrders = myOrders.filter(localOrder => {
       const matchInQueue = queue.find(q => q.id === localOrder.id);
-      return matchInQueue && matchInQueue.status === 'new';
+      return matchInQueue && (matchInQueue.status === 'new' || matchInQueue.status === 'confirmed' || matchInQueue.status === 'cooking' || matchInQueue.status === 'ready' || matchInQueue.status === 'completed');
   }).map(localOrder => {
       // Map ke data terbaru dari queue (untuk timer created_at yg akurat dari server)
       return queue.find(q => q.id === localOrder.id);
