@@ -44,6 +44,11 @@ export default function KasirDashboard() {
       setOrders(res.data.data);
     } catch (error) {
       console.error("Gagal ambil data:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          alert("Sesi telah berakhir, silakan login kembali.");
+          localStorage.clear();
+          router.push("/login");
+      }
     } finally {
       setLoading(false);
     }
