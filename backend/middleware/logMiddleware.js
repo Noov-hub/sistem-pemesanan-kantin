@@ -17,7 +17,8 @@ const actionMap = {
 };
 
 
-
+// Activity Logger masih butuh tuning sedikit untuk mengabaikan login dan update status,
+// tapi sekarang sudah bisa digunakan, mungkin butuh update pada data retention juga agar record tidak terlalu banyak dan memenuhi legalitas
 exports.activityLogger = (req, res, next) => {
     const monitoredMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     if(!monitoredMethods.includes(req.method)){
